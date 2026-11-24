@@ -1,0 +1,28 @@
+# .NET build and packaging outputs
+[Bb]in/
+[Oo]bj/
+/artifacts/
+*.binlog
+*.nupkg
+*.snupkg
+
+# Test and benchmark outputs
+[Tt]est[Rr]esults/
+BenchmarkDotNet.Artifacts/
+TestResult.xml
+*.trx
+
+# IDE caches and user settings
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Local test configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.secrets.json
