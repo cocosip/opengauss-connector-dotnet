@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>OpenGaussConnector</RootNamespace>
+    <AssemblyName>OpenGaussConnector</AssemblyName>
+    <PackageId>OpenGaussConnector</PackageId>
+    <Description>OpenGaussConnector is the managed .NET data provider for openGauss.</Description>
+    <PackageTags>opengauss;postgresql;ado;ado.net;database;sql</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Verification hook: build with -p:EmitGeneratedFiles=true to inspect generator output on disk. -->
+    <EmitCompilerGeneratedFiles Condition="'$(EmitGeneratedFiles)' == 'true'">true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath Condition="'$(EmitGeneratedFiles)' == 'true'">$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenGaussConnector.Tests" Key="$(OpenGaussConnectorPublicKey)" />
+    <InternalsVisibleTo Include="OpenGaussConnector.PluginTests" Key="$(OpenGaussConnectorPublicKey)" />
+    <InternalsVisibleTo Include="OpenGaussConnector.NodaTime.Tests" Key="$(OpenGaussConnectorPublicKey)" />
+    <InternalsVisibleTo Include="OpenGaussConnector.Specification.Tests" Key="$(OpenGaussConnectorPublicKey)" />
+  </ItemGroup>
+
+  <!-- Unsafe is part of the shared framework from .NET Core 3.0 onwards. -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1' ">
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="Microsoft.Bcl.HashCode" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1' ">
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenGaussConnector.SourceGenerators\OpenGaussConnector.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

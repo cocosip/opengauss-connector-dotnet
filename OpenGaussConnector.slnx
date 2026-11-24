@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenGaussConnector.SourceGenerators/OpenGaussConnector.SourceGenerators.csproj" />
+    <Project Path="src/OpenGaussConnector/OpenGaussConnector.csproj" />
+  </Folder>
+</Solution>

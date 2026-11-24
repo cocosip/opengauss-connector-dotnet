@@ -20,7 +20,7 @@ M1 从固定的 ADO.NET 快照开始。用同一份源码生成七个 NuGet 包�
 
 ## 首次构建和测试入口
 
-在仓库根目录完成上述项目和测试配置后，使用以下命令。每一步成功后再执行下一步。新建解决方案时使用 `dotnet new sln --name OpenGaussConnector --format slnx`。开发机已确认可用 SDK 为 `10.0.403`，将实际采用的版本记录到 `global.json` 和验收记录。 [SLNX、CPM 和 Package Validation](references.md#net-与-nuget-官方资料)
+在仓库根目录完成上述项目和测试配置后，使用以下命令。每一步成功后再执行下一步。新建解决方案时使用 `dotnet new sln --name OpenGaussConnector --format slnx`。仓库不设 `global.json`，直接使用开发机已安装的 .NET 10 SDK（本次为 `10.0.403`），实际版本记入验收记录。 [SLNX、CPM 和 Package Validation](references.md#net-与-nuget-官方资料)
 
 ```powershell
 dotnet --info

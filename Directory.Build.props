@@ -1,0 +1,44 @@
+<Project>
+
+  <PropertyGroup>
+    <!--
+      Single version for every package in the repository; no project declares its
+      own <Version>. 0.x pre-release line, independent of the server version.
+    -->
+    <Version>0.1.0</Version>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- Project-owned strong-name identity; upstream's key is not reused. -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)OpenGaussConnector.snk</AssemblyOriginatorKeyFile>
+    <!-- Public half of OpenGaussConnector.snk, for InternalsVisibleTo on signed assemblies. -->
+    <OpenGaussConnectorPublicKey>0024000004800000140100000602000000a4000052534131000800000100010059b1f4eb8b18817f35dd7df2de8e51b051a8d3decd35034cce44331026eb3ad8bede191fa6980b3b73275e41264f6caf7123716a36fe00f3bd77bcb1af2efebac1aab21ea0bd30eab7bc4b288e9dd868948ca08041d03ed7e93f21cc21d80b4a143916067440104bf25ea5de1db9aa278c441e0e5f28bb67e237af83cecea81a3204497637cac35b3c8fae71638e42d56e319ffe66aefeb1cf49312131f38d0d3c2544ff4816b066189f5b2b2082c16f54681ded14c3cc7e08eb65067cf3428c59ee0ec6029f2291d3160139c7013db361fd0df29d9a44036288099d3da89db51f80549851b4fd8f16461e0b8fe1c6d53950401ca5aa3d0f1221c9ed98fcfdde</OpenGaussConnectorPublicKey>
+
+    <Copyright>Copyright 2026 © The OpenGaussConnector Development Team</Copyright>
+    <Company>OpenGaussConnector</Company>
+    <Authors>The OpenGaussConnector Development Team</Authors>
+    <PackageLicenseExpression>MulanPSL2</PackageLicenseExpression>
+    <PackageIcon>openGauss.png</PackageIcon>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <NoWarn>$(NoWarn);NU5105</NoWarn>
+  </PropertyGroup>
+
+  <!-- In netstandard2.0 the BCL isn't annotated for nullability, so disable it there. -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <Nullable>disable</Nullable>
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)openGauss.png" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+
+</Project>

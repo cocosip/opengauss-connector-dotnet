@@ -38,7 +38,7 @@
 
 ## 目标框架与集中包管理
 
-根目录 `global.json` 选定 .NET 10 稳定 SDK 的已验证 feature band，由同一 SDK 编译所有目标。根 `Directory.Build.props` 集中设置包版本、可空性和确定性构建。根 `Directory.Packages.props` 启用 `ManagePackageVersionsCentrally`，按 `$(TargetFramework)` 定义 `PackageVersion`，项目文件只在需要依赖的 TFM 上声明无版本的 `PackageReference`。直接依赖版本在 M1 由恢复结果和消费测试确认。 [Microsoft CPM](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management) · [SLNX](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-sln)
+根目录 `Directory.Build.props` 集中设置包版本、可空性和确定性构建。根 `Directory.Packages.props` 启用 `ManagePackageVersionsCentrally`，按 `$(TargetFramework)` 定义 `PackageVersion`，项目文件只在需要依赖的 TFM 上声明无版本的 `PackageReference`。直接依赖版本在 M1 由恢复结果和消费测试确认。不设 `global.json` 固定 SDK 版本，直接使用开发机已安装的 .NET 10 SDK，实际版本记入验收记录。 [Microsoft CPM](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management) · [SLNX](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-sln)
 
 | TFM | 依赖与 API 策略 | 消费验证 |
 | --- | --- | --- |
