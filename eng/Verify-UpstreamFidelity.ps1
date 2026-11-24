@@ -9,7 +9,7 @@
     CONNTYPE. A difference therefore means the import changed something that is not a rename.
 
     Files listed in $expected carry a recorded deviation (see docs/opengauss-connector-import.md,
-    section "与上游的显式偏离") and are reported as informational.
+    section "Recorded deviations from upstream") and are reported as informational.
 
 .PARAMETER UpstreamPath
     Local checkout of the pinned upstream commit ba5e8ba.

@@ -1,22 +1,22 @@
-# 上游导入与重命名记录
+# Upstream Import and Rename Record
 
-2026-11-24 · 适用于 `docs/opengauss-connector-m1.md` 步骤 1 与步骤 2
+2026-11-24 · Applies to step 1 and step 2 of `docs/opengauss-connector-m1.md`
 
-本文件记录官方 ADO.NET 快照导入本仓库的固定基线、路径映射、机械重命名规则、与上游的显式偏离，以及每次导入的可检查结果。后续追加上游文件时，在对应小节的表格里补行。
+This file records the fixed baseline for importing the official ADO.NET snapshot into this repository, the path mapping, the mechanical rename rules, the recorded deviations from upstream, and the checkable results of each import. When appending upstream files later, add rows to the tables in the corresponding sections.
 
-## 固定基线
+## Fixed Baseline
 
-| 项 | 值 |
+| Item | Value |
 | --- | --- |
-| 上游仓库 | `gitcode.com/opengauss/openGauss-connector-adonet` |
-| 本地 checkout | `D:\Code\dotnet-source\openGauss-connector-adonet`（相对本仓库 `../../dotnet-source/openGauss-connector-adonet`） |
-| 提交 | `ba5e8ba629b0d660d095da6d8af94f487a00730c`（2023-11-07） |
-| 导入范围 | `src/` 全部七个项目与 `src/Shared`、`test/` 六个项目、`LICENSE`、`openGauss.png`、`.editorconfig`、`.gitattributes` |
-| 未导入 | 上游 `OpenGauss.sln`（改用 `OpenGaussConnector.slnx`）、`README.md`/`README.en.md`（根级说明按本项目重写时再补）、`OpenGauss.snk`（改用本项目密钥）、上游根 `Directory.Build.props`/`Directory.Packages.props`/`global.json`（按本项目方案重建） |
+| Upstream repository | `gitcode.com/opengauss/openGauss-connector-adonet` |
+| Local checkout | `D:\Code\dotnet-source\openGauss-connector-adonet` (relative to this repository: `../../dotnet-source/openGauss-connector-adonet`) |
+| Commit | `ba5e8ba629b0d660d095da6d8af94f487a00730c` (2023-11-07) |
+| Import scope | all seven projects under `src/` plus `src/Shared`, the six projects under `test/`, `LICENSE`, `openGauss.png`, `.editorconfig`, `.gitattributes` |
+| Not imported | upstream `OpenGauss.sln` (replaced by `OpenGaussConnector.slnx`), `README.md`/`README.en.md` (to be added when the root documentation is rewritten for this project), `OpenGauss.snk` (replaced by this project's key), upstream root `Directory.Build.props`/`Directory.Packages.props`/`global.json` (rebuilt for this project's solution) |
 
-## 路径映射
+## Path Mapping
 
-| 上游 | 本项目 |
+| Upstream | This project |
 | --- | --- |
 | `src/OpenGauss.NET/` | `src/OpenGaussConnector/` |
 | `src/OpenGauss.SourceGenerators/` | `src/OpenGaussConnector.SourceGenerators/` |
@@ -25,7 +25,7 @@
 | `src/OpenGauss.NetTopologySuite/` | `src/OpenGaussConnector.NetTopologySuite/` |
 | `src/OpenGauss.NodaTime.NET/` | `src/OpenGaussConnector.NodaTime/` |
 | `src/OpenGauss.OpenTelemetry.NET/` | `src/OpenGaussConnector.OpenTelemetry/` |
-| `src/Shared/` | `src/Shared/`（原样保留，由 `src/Directory.Build.props` 编译进各产品项目） |
+| `src/Shared/` | `src/Shared/` (kept as is, compiled into each product project by `src/Directory.Build.props`) |
 | `test/` | `tests/` |
 | `test/OpenGauss.Tests/` | `tests/OpenGaussConnector.Tests/` |
 | `test/OpenGauss.PluginTests/` | `tests/OpenGaussConnector.PluginTests/` |
@@ -34,11 +34,11 @@
 | `test/OpenGauss.TrimmingTests/` | `tests/OpenGaussConnector.TrimmingTests/` |
 | `test/OpenGauss.Benchmarks/` | `tests/OpenGaussConnector.Benchmarks/` |
 
-## 机械重命名
+## Mechanical Rename
 
-按以下顺序做全局替换（长串在前，避免前缀互相吞噬）。只改标识符、命名空间、项目引用与文档名，不改协议、SQL 与公共类型名。
+Perform the global replacements in the following order (longer strings first, so prefixes do not swallow each other). Only identifiers, namespaces, project references and document names are changed; protocols, SQL and public type names are left untouched.
 
-| 上游 | 本项目 |
+| Upstream | This project |
 | --- | --- |
 | `OpenGauss.SourceGenerators` | `OpenGaussConnector.SourceGenerators` |
 | `OpenGauss.GeoJSON.NET` | `OpenGaussConnector.GeoJSON` |
@@ -46,44 +46,44 @@
 | `OpenGauss.NetTopologySuite` | `OpenGaussConnector.NetTopologySuite` |
 | `OpenGauss.NodaTime.NET` | `OpenGaussConnector.NodaTime` |
 | `OpenGauss.OpenTelemetry.NET` | `OpenGaussConnector.OpenTelemetry` |
-| `OpenGauss.Tests` 等五个测试项目名 | `OpenGaussConnector.*` |
-| `OpenGauss.NET`（命名空间、程序集、项目引用、文档） | `OpenGaussConnector` |
+| `OpenGauss.Tests` and the other four test project names | `OpenGaussConnector.*` |
+| `OpenGauss.NET` (namespace, assembly, project references, documentation) | `OpenGaussConnector` |
 
-保留不动的公共类型名：`OpenGaussConnection`、`OpenGaussCommand`、`OpenGaussDataReader`、`OpenGaussTransaction`、`OpenGaussParameter`、`OpenGaussParameterCollection`、`OpenGaussConnectionStringBuilder`、`OpenGaussBatch`、`OpenGaussFactory`、`PostgresException`、`OpenGaussDbType` 等。
+Public type names kept unchanged: `OpenGaussConnection`, `OpenGaussCommand`, `OpenGaussDataReader`, `OpenGaussTransaction`, `OpenGaussParameter`, `OpenGaussParameterCollection`, `OpenGaussConnectionStringBuilder`, `OpenGaussBatch`, `OpenGaussFactory`, `PostgresException`, `OpenGaussDbType`, and so on.
 
-## 与上游的显式偏离
+## Recorded Deviations from Upstream
 
-除重命名外，导入阶段做了下述改动。每项都给出原因与可复核位置，便于按上游快照逐项对照。
+Besides renaming, the import stage made the following changes. Each item gives the reason and a location that can be reviewed, so it can be checked item by item against the upstream snapshot.
 
-| 编号 | 改动 | 原因 |
+| ID | Change | Reason |
 | --- | --- | --- |
-| D01 | 内部类 `OpenGaussConnector`（原 `OpenGauss.NET.Internal`）改名 `PhysicalConnector`，文件同步改名为 `Internal/PhysicalConnector.cs`、`.Auth.cs`、`.FrontendMessages.cs` | 根命名空间为 `OpenGaussConnector`，同名公共类型在 `namespace OpenGaussConnector` 内被解析为命名空间（CS0118），无法保留原名。类型位于 `Internal` 命名空间，非 ADO.NET 公共入口 |
-| D02 | 删除各文件的 `using OpenGauss;` | 上游根命名空间是带点的 `OpenGauss.NET`，`using OpenGauss;` 实际导入其父命名空间且恒为冗余；根命名空间改为单段后该指令无法解析（CS0246） |
-| D03 | `OpenGaussConnectionStringBuilder.cs` 的 `NET.TargetSessionAttributes` 改为 `OpenGaussConnector.TargetSessionAttributes` | 上游靠"`NET` 是父命名空间 `OpenGauss` 的成员命名空间"这一隐含解析；单段根命名空间下不再成立 |
-| D04 | `Properties/AssemblyInfo.cs` 去掉 `[assembly: AllowPartiallyTrustedCallers]`、`[assembly: SecurityRules(SecurityRuleSet.Level1)]`，`InternalsVisibleTo` 移入项目文件的 `InternalsVisibleTo` 项 | 前两者是 .NET Framework CAS 语义，在五组目标上不适用；友元程序集改用项目公钥，随签名身份生成 |
-| D05 | 强命名改用本项目 `OpenGaussConnector.snk`，公钥以 `$(OpenGaussConnectorPublicKey)` 传给 `InternalsVisibleTo` | 设计要求的"签名使用项目自己的身份"，不沿用上游密钥 |
-| D06 | `PhysicalConnector.Auth.cs` 的 `Hi` 在 `NET8_0_OR_GREATER` 上改用 `Rfc2898DeriveBytes.Pbkdf2(password, salt, iteration, HashAlgorithmName.SHA1, 32)` | 旧构造函数在 .NET 10 标记为过时（SYSLIB0060）。算法与参数与原实现一致（PBKDF2-HMAC-SHA1，32 字节），认证行为不变 |
-| D07 | `PhysicalConnector.cs` 在 `NET9_0_OR_GREATER` 上用 `X509CertificateLoader.LoadCertificateFromFile`/`LoadCertificate`/`LoadPkcs12`/`LoadPkcs12FromFile` 替换过时的 `X509Certificate2` 构造（SYSLIB0057） | .NET 9 起旧构造过时；loader 是官方替代路径，证书选择、信任链与 PEM/PKCS#12 语义保持不变 |
-| D08 | `OpenGaussException`/`PostgresException` 的二进制序列化成员用 `#pragma warning disable SYSLIB0051`（及 `CS0672`）局部抑制 | 保留五组资产一致的公共 API 与 netstandard 上的序列化支持；成员本身在 .NET 8+ 已过时但可用 |
-| D09 | 源生成器项目的 `Microsoft.CodeAnalysis.Analyzers` 引用与两份空 `AnalyzerReleases.*.md` 删除；`Microsoft.CodeAnalysis.CSharp` 升到 4.8.0，`Scriban.Signed` 升到 7.6.1 | 生成器是内部构建项目，不按可分发 analyzer 包发布（RS1036/RS2008 只适用于后者）；Scriban 5.0.0 有已知漏洞告警（NU1902/1903/1904） |
-| D10 | `TypeHandlerSourceGenerator.cs` 对 `UsingDirectiveSyntax.Name` 增加空判断 | 新版 Roslyn 的可空注解使原写法触发 CS8602（本项目开 `TreatWarningsAsErrors`） |
-| D11 | 未设置 `global.json` | 按项目负责人要求不固定 SDK 版本，直接使用已安装 SDK（本次验证为 10.0.403）。设计文档中的相关条目随此项调整 |
-| D12 | BCL 补充包版本：`System.Text.Json`、`System.Threading.Channels`、`System.Collections.Immutable`、`System.Diagnostics.DiagnosticSource` 取 10.0.0，`System.Runtime.CompilerServices.Unsafe` 取 6.1.2，`Microsoft.Bcl.HashCode` 取 1.1.1 | 上游 6.0.0 组合触发 NU1903（System.Text.Json 已知漏洞告警）。取值对应本次验证的 .NET 10 宿主，netstandard 两组资产仍可恢复 |
-| D13 | 四个扩展项目去掉上游的 `Microsoft.CodeAnalysis.PublicApiAnalyzers` 引用与 `PublicAPI.*.txt` 声明文件 | 声明文件按"可空注解已启用"生成，而 `netstandard2.0` 资产关闭可空（BCL 未注解），同一份声明无法跨五组 TFM 校验（RS0016/RS0017）。公共 API 兼容性改由发布阶段的包校验与测试覆盖 |
-| D14 | 修正重命名误伤的限定名：`using X = PhysicalConnector.StatementType`、`PhysicalConnector.Internal.*`、`PhysicalConnector.Json.NET`、`NET.Schema.*` 等恢复为 `OpenGaussConnector.*`；`using OpenGauss;` 之外所有 `NET.<Type/命名空间>` 的父命名空间写法改为完整命名空间 | 全局替换按 token 处理，会命中"命名空间限定写法"里的根命名空间；这类位置出现在命名空间别名、基类引用、泛型参数和注释中。由 `eng/Verify-UpstreamFidelity.ps1` 逐文件比对发现并修复 |
-| D15 | 作者、公司、版权、许可证集中到根 `Directory.Build.props`，删除各项目文件里的 `<Authors>`（上游为 `Microestc`） | 通用包元数据只应有一处定义；各项目仅保留包描述与标签等包特有信息 |
-| D16 | 测试连接串环境变量改名为 `OPENGAUSS_TEST_DB`，同时保留 `NPGSQL_TEST_DB` 作为回退 | 驱动不再使用 `Npgsql` 名称；回退使上游 CI 脚本与文档仍然可用 |
-| D17 | 过时行为提示与测试断言中的 `AppContext` 开关名改为 `OpenGaussConnector.EnableLegacyTimestampBehavior`、`OpenGaussConnector.DisableDateTimeInfinityConversions` | 代码实际读取的是 `OpenGaussConnector.*`，原提示指向一个无人读取的键，按提示配置不生效 |
+| D01 | The internal class `OpenGaussConnector` (formerly `OpenGauss.NET.Internal`) is renamed `PhysicalConnector`, and the files are renamed accordingly to `Internal/PhysicalConnector.cs`, `.Auth.cs`, `.FrontendMessages.cs` | The root namespace is `OpenGaussConnector`, so a public type with the same name inside `namespace OpenGaussConnector` resolves as the namespace (CS0118) and the original name cannot be kept. The type lives in the `Internal` namespace and is not an ADO.NET public entry point |
+| D02 | Removed `using OpenGauss;` from every file | The upstream root namespace was the dotted `OpenGauss.NET`, so `using OpenGauss;` actually imported its parent namespace and was always redundant; once the root namespace is a single segment, that directive no longer resolves (CS0246) |
+| D03 | In `OpenGaussConnectionStringBuilder.cs`, `NET.TargetSessionAttributes` is changed to `OpenGaussConnector.TargetSessionAttributes` | Upstream relied on the implicit resolution that "`NET` is a member namespace of the parent namespace `OpenGauss`"; that no longer holds under a single-segment root namespace |
+| D04 | In `Properties/AssemblyInfo.cs`, removed `[assembly: AllowPartiallyTrustedCallers]` and `[assembly: SecurityRules(SecurityRuleSet.Level1)]`; moved `InternalsVisibleTo` into `InternalsVisibleTo` items in the project file | The first two are .NET Framework CAS semantics and do not apply to the five target groups; friend assemblies now use the project public key and are generated with the signing identity |
+| D05 | Strong naming now uses this project's `OpenGaussConnector.snk`, with the public key passed to `InternalsVisibleTo` as `$(OpenGaussConnectorPublicKey)` | The design requirement "signing uses the project's own identity" rules out reusing the upstream key |
+| D06 | In `PhysicalConnector.Auth.cs`, `Hi` uses `Rfc2898DeriveBytes.Pbkdf2(password, salt, iteration, HashAlgorithmName.SHA1, 32)` on `NET8_0_OR_GREATER` | The old constructor is marked obsolete in .NET 10 (SYSLIB0060). The algorithm and parameters match the original implementation (PBKDF2-HMAC-SHA1, 32 bytes), so authentication behavior is unchanged |
+| D07 | In `PhysicalConnector.cs`, on `NET9_0_OR_GREATER`, the obsolete `X509Certificate2` constructors (SYSLIB0057) are replaced by `X509CertificateLoader.LoadCertificateFromFile`/`LoadCertificate`/`LoadPkcs12`/`LoadPkcs12FromFile` | The old constructors are obsolete since .NET 9; the loader is the official replacement path, and certificate selection, trust chain and PEM/PKCS#12 semantics stay unchanged |
+| D08 | The binary serialization members of `OpenGaussException`/`PostgresException` are locally suppressed with `#pragma warning disable SYSLIB0051` (and `CS0672`) | Keeps the public API identical across the five asset groups and keeps serialization support on netstandard; the members themselves are obsolete on .NET 8+ but still usable |
+| D09 | Removed the `Microsoft.CodeAnalysis.Analyzers` reference and the two empty `AnalyzerReleases.*.md` files from the source generator project; upgraded `Microsoft.CodeAnalysis.CSharp` to 4.8.0 and `Scriban.Signed` to 7.6.1 | The generator is an internal build project and is not published as a distributable analyzer package (RS1036/RS2008 apply only to the latter); Scriban 5.0.0 has known vulnerability warnings (NU1902/1903/1904) |
+| D10 | In `TypeHandlerSourceGenerator.cs`, added a null check for `UsingDirectiveSyntax.Name` | Nullable annotations in newer Roslyn make the original form trigger CS8602 (this project enables `TreatWarningsAsErrors`) |
+| D11 | `global.json` is not set | Per the project owner's request, the SDK version is not pinned and the installed SDK is used directly (10.0.403 for this verification). The related items in the design document are adjusted along with this item |
+| D12 | BCL supplementary package versions as ranges: `System.Text.Json`, `System.Threading.Channels`, `System.Collections.Immutable`, `System.Diagnostics.DiagnosticSource` at `[10.0.0,)`, `System.Runtime.CompilerServices.Unsafe` at `[6.1.2,)`, `Microsoft.Bcl.HashCode` at `[6.0.0,)` | The upstream 6.0.0 combination triggers NU1903 (System.Text.Json known vulnerability warning). The floors match the .NET 10 host used in this verification, the open ranges let a consumer take newer patch releases, and both netstandard assets can still be restored |
+| D13 | Removed the upstream `Microsoft.CodeAnalysis.PublicApiAnalyzers` reference and the `PublicAPI.*.txt` declaration files from the four extension projects | The declaration files were generated on the assumption that "nullable annotations are enabled", but the `netstandard2.0` asset disables nullability (the BCL is not annotated), so one set of declarations cannot validate across the five TFM groups (RS0016/RS0017). Public API compatibility is instead covered by package validation and tests at the release stage |
+| D14 | Fixed qualified names damaged by the rename: `using X = PhysicalConnector.StatementType`, `PhysicalConnector.Internal.*`, `PhysicalConnector.Json.NET`, `NET.Schema.*` and the like restored to `OpenGaussConnector.*`; every `NET.<Type/namespace>` parent-namespace form other than `using OpenGauss;` changed to the full namespace | The global replacement works on tokens and also hits the root namespace in "namespace-qualified" forms; such places occur in namespace aliases, base class references, generic parameters and comments. Found and fixed by the file-by-file comparison in `eng/Verify-UpstreamFidelity.ps1` |
+| D15 | Authors, company, copyright and license are centralized in the root `Directory.Build.props`, and `<Authors>` is removed from each project file (upstream was `Microestc`) | Common package metadata should be defined in only one place; each project keeps only package-specific information such as package description and tags |
+| D16 | The test connection string environment variable is renamed to `OPENGAUSS_TEST_DB`, while keeping `NPGSQL_TEST_DB` as a fallback | The driver no longer uses the `Npgsql` name; the fallback keeps upstream CI scripts and documentation working |
+| D17 | The `AppContext` switch names in obsolete-behavior notices and test assertions are changed to `OpenGaussConnector.EnableLegacyTimestampBehavior`, `OpenGaussConnector.DisableDateTimeInfinityConversions` | The code actually reads `OpenGaussConnector.*`; the original notices pointed to a key that nobody reads, so configuring per the notice had no effect |
 
-## 导入验证
+## Import Verification
 
-| 日期 | 检查 | 结果 |
+| Date | Check | Result |
 | --- | --- | --- |
-| 2026-11-24 | `dotnet restore` + `dotnet build OpenGaussConnector.slnx -c Release` | 成功，0 警告 0 错误，生成 `netstandard2.0`、`netstandard2.1`、`net8.0`、`net9.0`、`net10.0` 五份 `OpenGaussConnector.dll` |
-| 2026-11-24 | 生成器产物（`-p:EmitGeneratedFiles=true`） | 生成 `OpenGaussConnectionStringBuilder.Generated.cs` 与 43 个类型处理器分部类，命名空间均为 `OpenGaussConnector` |
-| 2026-11-24 | 离线冒烟（`artifacts/tmp/smoke`，不入库） | 连接串默认值/往返/大小写关键字、`OpenGaussFactory.Instance`、`DbProviderFactories.GetFactory("OpenGaussConnector")`、未打开连接状态、参数集合、`DbBatch`、命名空间断言全部通过 |
-| 2026-11-24 | `eng/Verify-UpstreamFidelity.ps1` | 逐文件比对 424 个上游 `.cs` 文件，除下表 10 处记录偏离外无非预期差异；该脚本用于后续追加上游文件后的回归检查 |
-| 2026-11-24 | 六个测试项目迁移（`tests/`，均 `net10.0`，版本走 CPM） | 全部编译通过；`eng/Test-Offline.ps1` 跑通 190 项无需服务端的用例（DI 15、扩展 8、上游离线夹具 167） |
-| 待接入 | 五组资产强制加载与包消费 | 见 [开发进度](opengauss-connector-progress.md) |
+| 2026-11-24 | `dotnet restore` + `dotnet build OpenGaussConnector.slnx -c Release` | Succeeded, 0 warnings 0 errors, produced five `OpenGaussConnector.dll` files for `netstandard2.0`, `netstandard2.1`, `net8.0`, `net9.0`, `net10.0` |
+| 2026-11-24 | Generator output (`-p:EmitGeneratedFiles=true`) | Generated `OpenGaussConnectionStringBuilder.Generated.cs` and 43 type handler partial classes, all in namespace `OpenGaussConnector` |
+| 2026-11-24 | Offline smoke test (`artifacts/tmp/smoke`, not committed) | Connection string defaults/round-trip/keyword case-insensitivity, `OpenGaussFactory.Instance`, `DbProviderFactories.GetFactory("OpenGaussConnector")`, closed-connection state, parameter collection, `DbBatch` and the namespace assertions all passed |
+| 2026-11-24 | `eng/Verify-UpstreamFidelity.ps1` | File-by-file comparison of 424 upstream `.cs` files; no unexpected differences besides the 10 recorded deviations in the table above; the script is used for regression checks after upstream files are appended |
+| 2026-11-24 | Migration of the six test projects (`tests/`, all `net10.0`, versions via CPM) | All compile; `eng/Test-Offline.ps1` ran through 190 cases that need no server (DI 15, extensions 8, upstream offline fixtures 167) |
+| Pending | Forced loading and package consumption of the five asset groups | See [development progress](opengauss-connector-progress.md) |
 
-`eng/Verify-UpstreamFidelity.ps1` 把两侧都折叠成同一套占位名（项目/命名空间 → `NS.*`，内部连接类型 → `CONNTYPE`）后比较内容，因此任何非重命名改动都会被报出来。本地上游快照缺失时先按[参考资料](references.md#本地源码)的路径检出对应提交。
+`eng/Verify-UpstreamFidelity.ps1` folds both sides into the same set of placeholder names (project/namespace → `NS.*`, internal connection type → `CONNTYPE`) before comparing the contents, so any change other than renaming is reported. When the local upstream snapshot is missing, first check out the corresponding commit following the path in [references](references.md#local-source-checkout).

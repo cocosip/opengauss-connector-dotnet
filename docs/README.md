@@ -1,12 +1,12 @@
-# OpenGaussConnector 文档
+# OpenGaussConnector documentation
 
-| 文档 | 用途 |
+| Document | Purpose |
 | --- | --- |
-| [驱动设计](opengauss-connector-design.md) | 移植策略、包与框架、协议、数据类型、验收和发布 |
-| [功能矩阵](opengauss-connector-feature-matrix.md) | 逐项比对旧 ADO.NET、JDBC 和服务端依据，给出优先级与验证条件 |
-| [开发进度](opengauss-connector-progress.md) | 当前状态、里程碑、任务依赖与验收记录格式 |
-| [M1 开工清单](opengauss-connector-m1.md) | 上游导入顺序、构建入口、测试环境和七包验收 |
-| [导入记录](opengauss-connector-import.md) | 上游固定提交、路径映射、机械重命名和与上游的显式偏离 |
-| [参考资料](references.md) | 源码快照、相对路径和版本化官方资料 |
+| [Driver design](opengauss-connector-design.md) | Porting strategy, packages and frameworks, protocol, data types, acceptance and release |
+| [Feature matrix](opengauss-connector-feature-matrix.md) | Item-by-item comparison of the old ADO.NET driver, JDBC and server evidence, with priority and verification conditions |
+| [Development progress](opengauss-connector-progress.md) | Current state, milestones, task dependencies and the acceptance log format |
+| [M1 starter checklist](opengauss-connector-m1.md) | Upstream import order, build entry points, test environment and acceptance of the seven packages |
+| [Import record](opengauss-connector-import.md) | Pinned upstream commit, path mapping, mechanical renames and recorded deviations from upstream |
+| [References](references.md) | Source snapshots, relative paths and versioned official material |
 
-2026-11-24 更新设计基线。首发包含核心、依赖注入、GeoJSON、Json.NET、NetTopologySuite、NodaTime 和 OpenTelemetry 七个包，各提供五组 TFM。JDBC 发布差异与拟验证的服务端版本见 [功能矩阵](opengauss-connector-feature-matrix.md)。实现与验收状态见 [开发进度](opengauss-connector-progress.md)。
+The design baseline was updated on 2026-11-24. The first release contains seven packages — core, dependency injection, GeoJSON, Json.NET, NetTopologySuite, NodaTime and OpenTelemetry — each built for five target frameworks. JDBC release differences and the server versions to verify are in the [feature matrix](opengauss-connector-feature-matrix.md). Implementation and acceptance status is in [development progress](opengauss-connector-progress.md).

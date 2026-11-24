@@ -1,120 +1,120 @@
-# openGauss ADO.NET 功能矩阵
+# openGauss ADO.NET Feature Matrix
 
-2026-11-24 · 源码调研基线
+2026-11-24 · Source investigation baseline
 
-ADO 指官方 ADO.NET 固定快照。功能表用于跟踪 .NET 移植。JDBC 版本差异表给出 `v5.0.3`、`v6.0.0`、`v6.0.6`、`v7.0.0` 与本地开发线的证据。表中提到的 ADO 核心文件位于 `src/OpenGauss.NET/`，JDBC 相应文件位于 `pgjdbc/src/main/java/org/postgresql/`。官方资料编号见 [参考资料](references.md)。
+ADO refers to the official ADO.NET fixed snapshot. The feature table is used to track the .NET port. The JDBC version difference table gives evidence for `v5.0.3`, `v6.0.0`, `v6.0.6`, `v7.0.0` and the local development line. The ADO core files mentioned in the table are located in `src/OpenGauss.NET/`, and the corresponding JDBC files are located in `pgjdbc/src/main/java/org/postgresql/`. Official document numbers are listed in [references](references.md).
 
-| 优先级 | 含义 |
+| Priority | Meaning |
 | --- | --- |
-| P0 | 首发必须交付并通过验收 |
-| P1 | 优先移植或增强，按联机验收结果纳入首发或后续版本 |
-| P2 | 专项评估 |
+| P0 | Must be delivered and pass acceptance in the first release |
+| P1 | Preferred for porting or enhancement; included in the first release or a later version according to live-server acceptance results |
+| P2 | Dedicated evaluation |
 
-下列条目是源码与文档证据。当前新驱动各项实现与联机验证均待开始。任务状态按条目 ID 更新。 [开发进度](opengauss-connector-progress.md)
+The items below are source and document evidence. Implementation and live-server verification of every new driver item are still to begin. Task status is updated by item ID. [Development progress](opengauss-connector-progress.md)
 
-## 构建与公共接口
+## Build and public API
 
-| ID | 能力 | ADO 基线 | JDBC 或规范依据 | 计划与验收 |
+| ID | Capability | ADO baseline | JDBC or specification basis | Plan and acceptance |
 | --- | --- | --- | --- | --- |
-| B01 | 五组 TFM 资产 | 核心含两个 Standard 及 .NET Core 3.1、.NET 5/6 | OB 已使用所需五组目标，见 MS3 | P0 · 对每组分别 build、pack、消费，Standard 强制加载指定资产 |
-| B02 | SLNX、CPM、按 TFM 的包依赖 | `OpenGauss.sln`，实际版本在项目内 | OB 的 SLNX 与条件版本分组，见 MS1、MS2、MS7、MS8 | P0 · 验证七个包的五组资产、扩展对核心的依赖下限，以及 .NET 8/9/10 随框架发行依赖的下限 `8.0.0`、`9.0.0`、`10.0.0` |
-| B03 | NuGet ID、程序集、命名空间和工厂 | 上游程序集、`OpenGauss.NET` 命名空间及签名配置 | OB 显式声明 `PackageId`、`AssemblyName` 和 `RootNamespace` | P0 · 验证 `OpenGaussConnector` 包内的 `OpenGaussConnector.dll`、根命名空间及旧版共存 |
-| B04 | 连接、命令、参数、读取器、事务 | `OpenGaussFactory.cs` 和各公共类 | JDBC API 行为可作语义对照 | P0 · ADO.NET 合约、工厂创建、同步与异步入口 |
-| B05 | `DbBatch` 与 `DbDataSource` | `OpenGaussBatch.cs`、工厂入口及 `Shims/Batching.cs`。未见对应 DataSource 类 | OB 的 DataSource 与 Builder | P0 · 验证各资产的批量 API，以及 Standard 编译的类库在现代应用选用现代资产时的类型和签名绑定。现代目标实现 DataSource、Builder 和连接池生命周期。E04 跟踪批量联机行为 |
-| B06 | 构建期生成器与包元数据 | 源生成器生成连接串与类型处理代码 | OB `eng/Verify-Packages.ps1` | P0 · 检查生成结果、发布声明、符号及包依赖隔离 |
-| B07 | Trimming、Native AOT | 有旧版 trimming 测试项目 | 由宿主与依赖能力决定 | P2 · 分别验证裁剪和 AOT 发布，以及反射映射、插件和静态注册 |
-| B08 | `OpenGaussConnector.DependencyInjection` | ADO 无对应工程 | OB 扩展方法、注册及生命周期测试，见 MS6、MS7 | P0 · 五组资产支持瞬态连接，现代目标支持普通和键控单例数据源。验证重复注册、别名、释放、依赖组和独立消费 |
-| B09 | 上游测试项目迁移 | 旧解决方案只加载核心测试。部分项目引用失效，多个联机夹具在缺少 `NPGSQL_TEST_DB` 时回退到默认连接串 | ADO 项目清单与测试入口，见 [M1 开工清单](opengauss-connector-m1.md) | P0 · SLNX 纳入各测试项目，修复引用并开启 GIS 用例。离线命令在无连接串配置时执行。联机配置由显式入口提供，记录实际执行及跳过数。基准项目保留独立运行入口 |
+| B01 | Five TFM asset groups | The core contains two Standard and .NET Core 3.1, .NET 5/6 | OB already uses the required five target groups, see MS3 | P0 · build, pack and consume each group separately; Standard forces loading of the specified assets |
+| B02 | SLNX, CPM, per-TFM package dependencies | `OpenGauss.sln`, actual versions inside the projects | OB's SLNX and conditional version groups, see MS1, MS2, MS7, MS8 | P0 · verify the five asset groups of the seven packages, the minimum dependency of the extensions on the core, and the ranged floors (`[8.0.0,)`, `[9.0.0,)`, `[10.0.0,)`) of the dependencies shipped with .NET 8/9/10 by the framework |
+| B03 | NuGet ID, assembly, namespace and factory | Upstream assembly, `OpenGauss.NET` namespace and signing configuration | OB explicitly declares `PackageId`, `AssemblyName` and `RootNamespace` | P0 · verify `OpenGaussConnector.dll` inside the `OpenGaussConnector` package, the root namespace and coexistence with the legacy version |
+| B04 | Connection, command, parameter, reader, transaction | `OpenGaussFactory.cs` and the public classes | JDBC API behavior can serve as semantic comparison | P0 · ADO.NET contract, factory creation, synchronous and asynchronous entry points |
+| B05 | `DbBatch` and `DbDataSource` | `OpenGaussBatch.cs`, the factory entry and `Shims/Batching.cs`. No corresponding DataSource class found | OB's DataSource and Builder | P0 · verify the batch API of each asset, and the type and signature binding when a class library compiled for Standard is consumed by a modern application that selects modern assets. Modern targets implement DataSource, Builder and connection pool lifecycle. E04 tracks live-server batch behavior |
+| B06 | Build-time generators and package metadata | Source generators generate connection string and type handling code | OB `eng/Verify-Packages.ps1` | P0 · check generated output, publish declarations, symbols and package dependency isolation |
+| B07 | Trimming, Native AOT | There is a legacy trimming test project | Determined by host and dependency capabilities | P2 · verify trimming and AOT publishing separately, plus reflection mapping, plugins and static registration |
+| B08 | `OpenGaussConnector.DependencyInjection` | ADO has no corresponding project | OB extension methods, registration and lifetime tests, see MS6, MS7 | P0 · the five asset groups support transient connections; modern targets support plain and keyed singleton data sources. Verify duplicate registration, aliases, disposal, dependency groups and standalone consumption |
+| B09 | Upstream test project migration | The legacy solution only loads core tests. Some project references are broken, and several live-server fixtures fall back to a default connection string when `NPGSQL_TEST_DB` is missing | ADO project inventory and test entry points, see [M1 kickoff checklist](opengauss-connector-m1.md) | P0 · SLNX includes each test project, references are fixed and GIS cases are enabled. Offline commands execute when no connection string is configured. Live-server configuration is provided by an explicit entry point, recording actual executions and skips. Benchmark projects keep an independent run entry point |
 
-## 连接、认证、会话
+## Connection, authentication, session
 
-| ID | 能力 | ADO 基线 | JDBC 或服务端依据 | 计划与验收 |
+| ID | Capability | ADO baseline | JDBC or server-side basis | Plan and acceptance |
 | --- | --- | --- | --- | --- |
-| C01 | TCP 与启动协议 | `Internal/ProtocolVersion.cs` 固定 3.51 | `core/v3/ConnectionFactoryImpl.java` 的 3.0、3.50、3.51 分支 | P0 · 首先验证 3.51 启动、服务端产品信息和参数状态 |
-| C02 | openGauss SHA256 | `Internal/OpenGaussConnector.Auth.cs` 请求号 10 走 SHA256 | JDBC `v6.0.6` 请求号 10，见 OG5 | P0 · 用官方实现与真实服务端核对成功、失败、取消和编码 |
-| C03 | MD5、混合认证、SM3 | MD5 有分支。11 在旧解析中作 SASL continue，13 未见分支 | JDBC `v6.0.6` 分别有 5、11、13，见 OG5 | P1 · 验证 MD5 旧配置，按服务端策略补齐混合认证和 SM3 |
-| C04 | 明文、GSS/SSPI、PostgreSQL SCRAM | 有明文和 GSS/SSPI。存在 SCRAM 方法，当前启动分派走 openGauss SHA256 | JDBC 有明文、GSS/SSPI 分支 | P2 · 分别核对协议、OS 和服务端配置，再声明支持 |
-| C05 | TLS、证书验证、mTLS | `SslStream`，连接串有 SSL 模式与信任选项 | JDBC SSL 配置，见 OG4 | P0 · Require、VerifyCA、VerifyFull、无效 CA、主机名不符和客户端证书 |
-| C06 | Unix domain socket | `Internal/OpenGaussConnector.cs` 有 UDS 路径 | 有 JDBC UDS 指南和开发线 oGRAC 用例 | P1 · Linux 上分别验证套接字路径、权限、取消和目标资产 |
-| C07 | 连接串、凭据、应用名、编码 | `OpenGaussConnectionStringBuilder.cs`、pgpass 与环境变量代码 | JDBC `PGProperty.java`，见 OG3 | P0 · 基础键、凭据优先级、UTF-8 与日志脱敏。其他编码单独验证 |
-| C08 | 连接池、池键和会话复位 | `ConnectorPool.cs`、`PoolTests.cs` | JDBC 数据源与服务端会话参数 | P0 · 复位事务、会话状态和预准备状态，验证泄漏、并发和故障处置 |
-| C09 | 主备选择、负载均衡、连接故障转移 | `MultiHostConnectorPool.cs`、`MultipleHostsTests.cs` | JDBC `hostchooser/`、`targetServerType`，见 OG3 | P1 · 主备切换、多端点顺序、角色复检、池失效和只读偏好 |
-| C10 | 动态拓扑、自动均衡、语句分流、ATF | ADO 主要基于静态主机集合和会话偏好 | JDBC 有 `quickautobalance/`、`readwritesplitting/` 及 ATF 配置 | P2 · 分别核对拓扑、服务端组件、事务一致性与错误语义 |
-| C11 | oGRAC | 快照未形成专项支持证据 | JDBC `v7.0.0` 有 `jdbc:oGRAC:` 与协议实现，开发线补充专项测试，见 OG9 | P2 · 独立验证多读多写和多实例会话行为 |
-| C12 | 全密态与 TLCP | 快照未见相应实现 | `v5.0.3` 已有 JDBC `enable_ce` 及 JNI 入口。TLCP 属性见 `v6.0.0` | P2 · 分别评估原生依赖、证书接口、平台、部署和分发 |
-| C13 | 服务端版本识别与能力选择 | 读取启动参数 `server_version`，目录加载含 `SELECT version()`。部分能力判断继承 PostgreSQL 版本阈值 | JDBC `ConnectionFactoryImpl.queryGaussdbVersion` 已用 `SELECT version()` 识别产品 | P0 · `Server Version=Auto` 与显式版本校验，按物理连接识别模式和目录能力。测试未知版本、混合版本节点、升级后重连 |
+| C01 | TCP and startup protocol | `Internal/ProtocolVersion.cs` pinned to 3.51 | The 3.0, 3.50, 3.51 branches of `core/v3/ConnectionFactoryImpl.java` | P0 · first verify 3.51 startup, server product information and parameter status |
+| C02 | openGauss SHA256 | `Internal/OpenGaussConnector.Auth.cs` routes request code 10 to SHA256 | JDBC `v6.0.6` request code 10, see OG5 | P0 · check success, failure, cancellation and encoding against the official implementation and a real server |
+| C03 | MD5, mixed authentication, SM3 | MD5 has a branch. 11 acts as SASL continue in the legacy parsing, no branch found for 13 | JDBC `v6.0.6` has 5, 11, 13 respectively, see OG5 | P1 · verify the legacy MD5 configuration; complete mixed authentication and SM3 according to server policy |
+| C04 | Plaintext, GSS/SSPI, PostgreSQL SCRAM | Plaintext and GSS/SSPI exist. SCRAM methods exist, current startup dispatch uses openGauss SHA256 | JDBC has plaintext and GSS/SSPI branches | P2 · check protocol, OS and server configuration separately, then declare support |
+| C05 | TLS, certificate verification, mTLS | `SslStream`, the connection string has SSL mode and trust options | JDBC SSL configuration, see OG4 | P0 · Require, VerifyCA, VerifyFull, invalid CA, hostname mismatch and client certificate |
+| C06 | Unix domain socket | `Internal/OpenGaussConnector.cs` has a UDS path | A JDBC UDS guide exists and the development line has oGRAC cases | P1 · verify socket path, permissions, cancellation and target assets separately on Linux |
+| C07 | Connection string, credentials, application name, encoding | `OpenGaussConnectionStringBuilder.cs`, pgpass and environment variable code | JDBC `PGProperty.java`, see OG3 | P0 · basic keys, credential precedence, UTF-8 and log redaction. Other encodings are verified separately |
+| C08 | Connection pool, pool keys and session reset | `ConnectorPool.cs`, `PoolTests.cs` | JDBC data sources and server session parameters | P0 · reset transactions, session state and prepared state; verify leaks, concurrency and failure handling |
+| C09 | Primary/standby selection, load balancing, connection failover | `MultiHostConnectorPool.cs`, `MultipleHostsTests.cs` | JDBC `hostchooser/`, `targetServerType`, see OG3 | P1 · primary/standby switchover, multi-endpoint ordering, role re-check, pool invalidation and read-only preference |
+| C10 | Dynamic topology, automatic balancing, statement routing, ATF | ADO is mainly based on a static host set and session preference | JDBC has `quickautobalance/`, `readwritesplitting/` and ATF configuration | P2 · check topology, server components, transaction consistency and error semantics separately |
+| C11 | oGRAC | The snapshot has no evidence of dedicated support | JDBC `v7.0.0` has `jdbc:oGRAC:` and a protocol implementation; the development line adds dedicated tests, see OG9 | P2 · verify multi-read multi-write and multi-instance session behavior independently |
+| C12 | Fully encrypted and TLCP | The snapshot shows no corresponding implementation | `v5.0.3` already has JDBC `enable_ce` and a JNI entry point. TLCP properties are in `v6.0.0` | P2 · evaluate native dependencies, certificate interfaces, platform, deployment and distribution separately |
+| C13 | Server version identification and capability selection | Reads the startup parameter `server_version`; catalog loading includes `SELECT version()`. Some capability checks inherit PostgreSQL version thresholds | JDBC `ConnectionFactoryImpl.queryGaussdbVersion` already uses `SELECT version()` to identify the product | P0 · validation of `Server Version=Auto` and of an explicit version; identify mode and catalog capabilities per physical connection. Test unknown versions, mixed-version nodes, and reconnect after upgrade |
 
-## 执行、事务、流式与复制
+## Execution, transactions, streaming and replication
 
-| ID | 能力 | ADO 基线 | JDBC 或服务端依据 | 计划与验收 |
+| ID | Capability | ADO baseline | JDBC or server-side basis | Plan and acceptance |
 | --- | --- | --- | --- | --- |
-| E01 | 参数、预准备、查询、多结果 | `OpenGaussCommand.cs`、`SqlQueryParser.cs`、命令与准备测试 | `jdbc/PgPreparedStatement.java`、`core/v3/QueryExecutorImpl.java` | P0 · 命名与位置参数、NULL、预准备计数、多语句和多结果 |
-| E02 | 事务、隔离级别、保存点 | `OpenGaussTransaction.cs`、`TransactionTests.cs` | JDBC connection 事务与保存点逻辑 | P0 · 提交、回滚、异常后事务状态和保存点恢复 |
-| E03 | 异步、超时、取消 | 连接、命令和读取器有异步路径，旧测试含取消 | JDBC 的连接、查询和取消超时配置 | P0 · 取消前、中、后对照，验证消息边界与连接能否复用 |
-| E04 | 批量执行与生成键 | `OpenGaussBatch.cs`、`BatchTests.cs` | JDBC 批量执行与生成键用例 | P1 · 验证错误位置、回滚和行数。按模式验证 `RETURNING` 或可用的键返回语义 |
-| E05 | 批量 INSERT 改写 | 上游有批量执行 API | JDBC `reWriteBatchedInserts`，见 OG3 | P1 · 单独评估收益，覆盖语句形状、生成键和中途失败 |
-| E06 | COPY 文本、CSV、二进制 | `OpenGaussBinaryImporter.cs`、`OpenGaussBinaryExporter.cs`、`OpenGaussRawCopyStream.cs` | JDBC `copy/CopyManager.java`，见 OG7 | P1 · 按方向和格式分别验证往返、取消、终止与回滚 |
-| E07 | 顺序读取、游标分批、流式参数 | 有 `SequentialAccess`、缓冲与读写流路径 | JDBC `defaultRowFetchSize`、流式参数选项 | P1 · 大行、大值和中途取消。单列顺序读与服务端游标分批分别实测 |
-| E08 | 函数、过程、OUT/INOUT、refcursor | `OpenGaussCommand.cs` 的 `CommandType.StoredProcedure` 生成 `SELECT * FROM` | JDBC callable、procedure、cursor 用例，见 OG12 | P1 · 保留上游函数调用语义，按 A、B、PG 分别验证显式 `CALL`、参数方向和返回游标 |
-| E09 | DataAdapter、CommandBuilder | `OpenGaussDataAdapter.cs`、`OpenGaussCommandBuilder.cs` | ADO.NET API 约定 | P1 · `Fill`、更新命令生成、主键和标识符引号 |
-| E10 | 通知、Notice、SQLSTATE、诊断 | 有通知、Notice、异常与 EventSource 代码及测试 | JDBC notice 与异常映射 | P0 · 错误和 SQLSTATE 语义。P1 · 通知和诊断事件 |
-| E11 | 物理及逻辑复制 | `Replication/` 含物理、`PgOutput`、`TestDecoding` 代码 | JDBC `core/v3/replication/`，见 OG8 | P2 · 确认服务器复制权限、槽、输出插件、LSN 与恢复，逐个声明支持 |
-| E12 | 大对象与 LOB 流 | 有 Large Object API。旧 ADO README 记载服务端报告不支持 | JDBC 有 LargeObjectManager 与 Blob/Clob 路径 | P2 · 区分 PostgreSQL Large Object API、openGauss LOB 类型和流式读写 |
-| E13 | `System.Transactions`、分布式事务 | 有资源管理器与旧测试 | JDBC XA 为另一路径 | P2 · 分开验证本地 enlistment、准备事务、分布式宿主及恢复 |
-| E14 | Multiplexing | `MultiplexingConnectorPool.cs` 和旧测试 | JDBC 的多主机和分流与此机制有独立语义 | P2 · 基本池稳定后验证排序、事务绑定、取消及故障恢复 |
+| E01 | Parameters, preparation, queries, multiple results | `OpenGaussCommand.cs`, `SqlQueryParser.cs`, command and preparation tests | `jdbc/PgPreparedStatement.java`, `core/v3/QueryExecutorImpl.java` | P0 · named and positional parameters, NULL, prepared statement count, multiple statements and multiple results |
+| E02 | Transactions, isolation levels, savepoints | `OpenGaussTransaction.cs`, `TransactionTests.cs` | JDBC connection transaction and savepoint logic | P0 · commit, rollback, transaction state after an exception and savepoint recovery |
+| E03 | Asynchronous, timeout, cancellation | Connections, commands and readers have asynchronous paths, legacy tests include cancellation | JDBC connection, query and cancellation timeout configuration | P0 · compare before, during and after cancellation; verify message boundaries and whether the connection can be reused |
+| E04 | Batch execution and generated keys | `OpenGaussBatch.cs`, `BatchTests.cs` | JDBC batch execution and generated key cases | P1 · verify error position, rollback and row counts. Verify `RETURNING` or the available key return semantics per mode |
+| E05 | Batch INSERT rewriting | The upstream has a batch execution API | JDBC `reWriteBatchedInserts`, see OG3 | P1 · evaluate the benefit separately, covering statement shapes, generated keys and mid-way failure |
+| E06 | COPY text, CSV, binary | `OpenGaussBinaryImporter.cs`, `OpenGaussBinaryExporter.cs`, `OpenGaussRawCopyStream.cs` | JDBC `copy/CopyManager.java`, see OG7 | P1 · verify round trip, cancellation, termination and rollback separately per direction and format |
+| E07 | Sequential reading, cursor batching, streaming parameters | There are `SequentialAccess`, buffering and read/write stream paths | JDBC `defaultRowFetchSize`, streaming parameter options | P1 · large rows, large values and mid-way cancellation. Sequential reading of a single column and server-side cursor batching are measured separately |
+| E08 | Functions, procedures, OUT/INOUT, refcursor | `CommandType.StoredProcedure` of `OpenGaussCommand.cs` generates `SELECT * FROM` | JDBC callable, procedure and cursor cases, see OG12 | P1 · keep upstream function call semantics, verify explicit `CALL`, parameter direction and returned cursor separately for A, B and PG |
+| E09 | DataAdapter, CommandBuilder | `OpenGaussDataAdapter.cs`, `OpenGaussCommandBuilder.cs` | ADO.NET API conventions | P1 · `Fill`, update command generation, primary keys and identifier quoting |
+| E10 | Notifications, Notice, SQLSTATE, diagnostics | Notification, Notice, exception and EventSource code and tests exist | JDBC notice and exception mapping | P0 · error and SQLSTATE semantics. P1 · notification and diagnostic events |
+| E11 | Physical and logical replication | `Replication/` contains physical, `PgOutput`, `TestDecoding` code | JDBC `core/v3/replication/`, see OG8 | P2 · confirm server replication privileges, slots, output plugins, LSN and recovery, declare support item by item |
+| E12 | Large objects and LOB streaming | A Large Object API exists. The legacy ADO README records that the server reports it as unsupported | JDBC has LargeObjectManager and Blob/Clob paths | P2 · distinguish the PostgreSQL Large Object API, openGauss LOB types and streaming reads and writes |
+| E13 | `System.Transactions`, distributed transactions | A resource manager and legacy tests exist | JDBC XA is a separate path | P2 · verify local enlistment, prepared transactions, distributed hosts and recovery separately |
+| E14 | Multiplexing | `MultiplexingConnectorPool.cs` and legacy tests | JDBC multi-host and routing have semantics independent of this mechanism | P2 · after the basic pool is stable, verify ordering, transaction binding, cancellation and failure recovery |
 
-## 类型、元数据与扩展
+## Types, metadata and extensions
 
-| ID | 能力 | ADO 基线 | JDBC 或服务端依据 | 计划与验收 |
+| ID | Capability | ADO baseline | JDBC or server-side basis | Plan and acceptance |
 | --- | --- | --- | --- | --- |
-| T01 | 基础数值、文本、二进制、布尔、NULL | 内置类型处理器及类型单测 | JDBC `jdbc/TypeInfoCache.java` | P0 · 按数据库模式与类型验证参数、结果、精度和溢出 |
-| T02 | 日期、时间戳、时区、interval | 旧代码含当前和 legacy 映射，另有 NodaTime 插件 | JDBC 时间类型与用例 | P0 · 基础往返、时区、边界。P1 · interval 和旧时间语义 |
-| T03 | UUID、JSON、JSONB | 旧类型处理器与 JSON 测试 | JDBC 类型缓存，实际 OID 与编码取自目标服务端 | P0 · UUID 与基础 JSON。P1 · JSONB 二进制和复杂序列化行为 |
-| T04 | 数组、枚举、复合、domain、range/multirange | 有通用映射代码。旧 README 已记录 DOMAIN 失败 | JDBC 类型缓存和服务端目录 | P1 · 数组及常用类型。P2 · 逐项确认复杂类型的语法、目录、读写和空值 |
-| T05 | 兼容模式特有类型和语义 | ADO README 提供 A、B、PG 建库例子 | `DBCOMPATIBILITY`，见 OG6。开发线 oGRAC 另有 RAW/LOB 等测试 | P1 · 实测模式与版本后确定类型名、OID、精度、参数推断与回退策略 |
-| T06 | 目录与 `GetSchema` | `OpenGaussSchema.cs`、`PostgresDatabaseInfo.cs`，旧 README 记录部分目录测试失败 | JDBC `jdbc/PgDatabaseMetaData.java` | P0 · 基础表、列、索引、键和约束。P1 · 序列、identity、生成列与扩展 |
-| T07 | Reader 列描述及 SchemaTable | `ReaderOldSchemaTests.cs`、`ReaderNewSchemaTests.cs` | JDBC ResultSetMetaData | P0 · 别名、基础表信息、精度、标度、可空性和目录权限 |
-| T09 | 向量和后续服务端新类型 | 旧 ADO 未见向量专项映射 | 7.0.0 企业版发行说明含向量存储及索引，见 OG2 | P2 · 先查发行形态、扩展、类型 OID 和文本/二进制协议，再决定 CLR API |
+| T01 | Basic numeric, text, binary, Boolean, NULL | Built-in type handlers and type unit tests | JDBC `jdbc/TypeInfoCache.java` | P0 · verify parameters, results, precision and overflow per database mode and type |
+| T02 | Date, timestamp, time zone, interval | Legacy code contains current and legacy mappings, plus a NodaTime plugin | JDBC time types and cases | P0 · basic round trip, time zone, boundaries. P1 · interval and legacy time semantics |
+| T03 | UUID, JSON, JSONB | Legacy type handlers and JSON tests | JDBC type cache, actual OID and encoding come from the target server | P0 · UUID and basic JSON. P1 · JSONB binary and complex serialization behavior |
+| T04 | Arrays, enums, composites, domain, range/multirange | General mapping code exists. The legacy README has recorded DOMAIN failures | JDBC type cache and server catalogs | P1 · arrays and common types. P2 · confirm syntax, catalogs, reads and writes and null values of complex types item by item |
+| T05 | Types and semantics specific to compatibility mode | The ADO README provides A, B, PG database creation examples | `DBCOMPATIBILITY`, see OG6. The development line has separate RAW/LOB and other tests for oGRAC | P1 · determine type names, OIDs, precision, parameter inference and fallback strategy after measuring modes and versions |
+| T06 | Catalogs and `GetSchema` | `OpenGaussSchema.cs`, `PostgresDatabaseInfo.cs`, the legacy README records some catalog test failures | JDBC `jdbc/PgDatabaseMetaData.java` | P0 · basic tables, columns, indexes, keys and constraints. P1 · sequences, identity, generated columns and extensions |
+| T07 | Reader column description and SchemaTable | `ReaderOldSchemaTests.cs`, `ReaderNewSchemaTests.cs` | JDBC ResultSetMetaData | P0 · aliases, base table information, precision, scale, nullability and catalog permissions |
+| T09 | Vectors and later new server types | The legacy ADO shows no dedicated vector mapping | The 7.0.0 enterprise edition release notes cover vector storage and indexes, see OG2 | P2 · first check the distribution form, extensions, type OIDs and text/binary protocol, then decide the CLR API |
 
-## 官方 ADO.NET 扩展包
+## Official ADO.NET extension packages
 
-五个独立上游扩展均纳入移植。每个包单独记录五组资产的编译、打包和消费结果。联机能力按实测拓扑、服务端扩展和数据类型记录。 [包及注册入口](opengauss-connector-design.md#官方-adonet-扩展包)
+All five independent upstream extensions are included in the port. For each package, the compile, pack and consume results of the five asset groups are recorded separately. Live-server capabilities are recorded per measured topology, server extension and data type. [Packages and registration entry points](opengauss-connector-design.md#official-adonet-extension-packages)
 
-| ID | 上游项目 | 移植包 | 首发验收 |
+| ID | Upstream project | Ported package | First-release acceptance |
 | --- | --- | --- | --- |
-| X01 | `OpenGauss.GeoJSON.NET` | `OpenGaussConnector.GeoJSON` | P0 · `UseGeoJson`、EWKB 往返、geometry/geography、SRID、包围盒、旧 CRS 选项及符合 RFC 7946 的 WGS 84 样例。参见 EXT1、EXT2 |
-| X02 | `OpenGauss.Json.NET` | `OpenGaussConnector.Json.NET` | P0 · `UseJsonNet`、json/jsonb、POCO、NULL、文本和二进制、自定义序列化设置及内置映射优先级。参见 EXT3 |
-| X03 | `OpenGauss.NetTopologySuite` | `OpenGaussConnector.NetTopologySuite` | P0 · `UseNetTopologySuite`、geometry/geography、EWKB、SRID、Z/M 和精度模型，与 GeoJSON 同进程隔离。参见 EXT2 |
-| X04 | `OpenGauss.NodaTime.NET` | `OpenGaussConnector.NodaTime` | P0 · `UseNodaTime`、日期时间、时区、无穷值、Duration/Period 和旧版行为。范围与多范围按服务端存在情况验证。参见 EXT4 |
-| X05 | `OpenGauss.OpenTelemetry.NET` | `OpenGaussConnector.OpenTelemetry` | P0 · `AddOpenGauss`、ActivitySource 订阅、成功和错误 span、标签脱敏、关闭监听时的行为及旧程序集共存。参见 EXT5、EXT6 |
+| X01 | `OpenGauss.GeoJSON.NET` | `OpenGaussConnector.GeoJSON` | P0 · `UseGeoJson`, EWKB round trip, geometry/geography, SRID, bounding box, legacy CRS options and a WGS 84 sample conforming to RFC 7946. See EXT1, EXT2 |
+| X02 | `OpenGauss.Json.NET` | `OpenGaussConnector.Json.NET` | P0 · `UseJsonNet`, json/jsonb, POCO, NULL, text and binary, custom serialization settings and built-in mapping precedence. See EXT3 |
+| X03 | `OpenGauss.NetTopologySuite` | `OpenGaussConnector.NetTopologySuite` | P0 · `UseNetTopologySuite`, geometry/geography, EWKB, SRID, Z/M and precision model, process isolation from GeoJSON. See EXT2 |
+| X04 | `OpenGauss.NodaTime.NET` | `OpenGaussConnector.NodaTime` | P0 · `UseNodaTime`, date and time, time zone, infinite values, Duration/Period and legacy behavior. Ranges and multiranges are verified according to their presence on the server. See EXT4 |
+| X05 | `OpenGauss.OpenTelemetry.NET` | `OpenGaussConnector.OpenTelemetry` | P0 · `AddOpenGauss`, ActivitySource subscription, success and error spans, tag redaction, behavior when listening is closed, and coexistence with legacy assemblies. See EXT5, EXT6 |
 
-## JDBC 发布版本差异
+## JDBC release version differences
 
-「已见」表示在指定标签中核对到源码或设置。首见范围限于本表对比的标签。JDBC 标签用于确认客户端行为的变化。具体服务端能力单独核验发行形态、模式、配置与实测结果。差异提交和对比命令见 [参考资料](references.md)。
+"Seen" means the source or setting was checked in the specified tag. The first-seen scope is limited to the tags compared in this table. JDBC tags are used to confirm changes in client behavior. Specific server capabilities are verified separately for distribution form, mode, configuration and measured results. Difference commits and comparison commands are in [references](references.md).
 
-| 对应功能 | 5.0.3 / 6.0.0 / 6.0.6 证据 | 7.0.0 标签与本地开发线 | 服务端条件和 .NET 处理 |
+| Corresponding feature | 5.0.3 / 6.0.0 / 6.0.6 evidence | 7.0.0 tag and local development line | Server conditions and .NET handling |
 | --- | --- | --- | --- |
-| C01、C02、C03 · 启动与密码认证 | `v5.0.3` 已有 SHA256、MD5-SHA256、SM3 分支。`v6.0.6` 支持 3.0、3.50、3.51 启动报文 | `v7.0.0` 保留这些路径 | 由握手报文与认证配置选择处理，产品版本用于连接后的兼容判断 |
-| C09、C10 · 静态主备和快速均衡 | `v5.0.3` 已有 `targetServerType`、`loadBalanceHosts` 和快速均衡相关配置。`v6.0.0` 已有语句分流开关 | `v7.0.0` 延续 | 从会话或拓扑采集端点实际角色，逐端点验证 |
-| C12 · 全密态 | `v5.0.3` 已有 `enable_ce` 和 `gauss_cl_jni` | `v7.0.0` 保留 | 需目标服务端、客户端原生组件和密钥部署 |
-| C05、C12 · TLCP | `v6.0.0` 已有 TLCP 及加密证书、密钥参数，`v6.0.6` 保留 | `v7.0.0` 保留，另有 oGRAC 的 SSL 路径 | 按产品、证书和连接端点验证，独立于普通 TLS |
-| E05、E07 · 批量改写和 Fetch Size | `v5.0.3` 已有 `reWriteBatchedInserts` 和 `defaultRowFetchSize` | `v7.0.0` 保留，另增加简单查询的 Reader 缓冲上限 | 批量改写和游标各自验证。客户端资源限制可覆盖全部服务端版本 |
-| C09、E01 · 断连重连和预准备状态 | 在 `v6.0.6` 已有 `autoReconnect` 且包含断线后清理预准备状态改动（`77acc2b`、`dfd3ca7`） | `v7.0.0` 保留重连参数，另加入 ATF 流程 | .NET 重建物理连接时使旧预准备缓存失效。出现未知结果的写入或提交时返回错误 |
-| T05 · `bit_output` 与旧版兼容 | `v6.0.6` 含针对 5.0 及之前的兼容修复（`e75486e`） | `v7.0.0` 延续该行为并收紧参数检查 | .NET 根据真实配置支持情况选择路径，覆盖旧版对象缺失、权限不足和实际返回值 |
-| T06、T07 · 生成列元数据 | `v6.0.6` 增加 `IS_GENERATEDCOLUMN`（`22a6b2e`），SQL 按兼容版本选择字段 | `v7.0.0` 保留 | .NET 检查目录中生成列字段和表达式。逐版本、模式验证值及缺失语义 |
-| C11 · oGRAC 驱动入口 | 对照的 6.0.6 标签无该入口及 OR 协议类 | `v7.0.0` 增加 `jdbc:oGRAC:`、`ORConnection`、`ORQueryExecutorImpl`、SSL 和类型/元数据实现。开发线另外新增 36 个专项测试文件，并修改 `ORResultSet` | 目标为独立 oGRAC 产品和相应协议。普通 openGauss 7.0.0 连接仍使用普通握手 |
-| C10、E02 · ATF 会话和事务恢复 | `v6.0.6` 已有基础重连配置 | `v7.0.0` 增加 ATF 开关、服务地址、缓存和结果检查（`8c8ea6b` 等） | 专项部署验证事务一致性与故障边界。基础驱动的重连保持原请求失败语义 |
-| T09 · 多向量并发查询 | `v6.0.6` 无 `util/ParallelSearch.java` | `v7.0.0` 新增 Java 客户端查询辅助类（`d2950de`） | 7.0.0 企业版发行说明记录原生向量存储与索引。分别查询目标环境的扩展、操作符、类型及索引，验证后再决定 .NET API |
-| E06、E07 · COPY 与流式资源边界 | 旧标签已有 COPY 和流式参数 | `v7.0.0` 新增 `maxCopyDataReceiveBytes`、`maxBufferedStreamParameterChars`，并补充测试 | 客户端资源限制应用于各受支持版本。各版本实际 COPY 格式与取消语义仍需联机验证 |
-| C05、E11 · TLS 与复制加固 | 既有 TLS 校验和复制路径 | `v7.0.0` 加强证书验证路径和复制槽标识符校验，并补充资源边界测试 | 将适用的安全行为纳入 .NET 共享实现，各环境使用相同校验规则 |
+| C01, C02, C03 · Startup and password authentication | `v5.0.3` already has SHA256, MD5-SHA256 and SM3 branches. `v6.0.6` supports 3.0, 3.50 and 3.51 startup messages | `v7.0.0` keeps these paths | Chosen by handshake message and authentication configuration; the product version is used for compatibility decisions after connecting |
+| C09, C10 · Static primary/standby and quick balancing | `v5.0.3` already has `targetServerType`, `loadBalanceHosts` and quick balancing related configuration. `v6.0.0` already has statement routing switches | `v7.0.0` continues | Collect actual endpoint roles from the session or topology, verify per endpoint |
+| C12 · Fully encrypted | `v5.0.3` already has `enable_ce` and `gauss_cl_jni` | `v7.0.0` keeps them | Requires the target server, client native components and key deployment |
+| C05, C12 · TLCP | `v6.0.0` already has TLCP and encrypted certificate and key parameters, `v6.0.6` keeps them | `v7.0.0` keeps them, plus the SSL path of oGRAC | Verify by product, certificate and connection endpoint, independent of ordinary TLS |
+| E05, E07 · Batch rewriting and Fetch Size | `v5.0.3` already has `reWriteBatchedInserts` and `defaultRowFetchSize` | `v7.0.0` keeps them, and additionally adds a Reader buffer cap for simple queries | Batch rewriting and cursors are verified separately. Client resource limits can cover all server versions |
+| C09, E01 · Reconnect after disconnect and prepared state | `v6.0.6` already has `autoReconnect` and includes the change that cleans up prepared state after disconnect (`77acc2b`, `dfd3ca7`) | `v7.0.0` keeps the reconnect parameters and additionally adds the ATF flow | .NET invalidates the old prepared cache when it rebuilds a physical connection. Returns an error for a write or commit with unknown results |
+| T05 · `bit_output` and legacy compatibility | `v6.0.6` contains compatibility fixes for 5.0 and earlier (`e75486e`) | `v7.0.0` continues that behavior and tightens parameter checks | .NET chooses the path according to real configuration support, covering missing legacy objects, insufficient permissions and actual return values |
+| T06, T07 · Generated column metadata | `v6.0.6` adds `IS_GENERATEDCOLUMN` (`22a6b2e`), the SQL selects fields by compatibility version | `v7.0.0` keeps it | .NET checks generated column fields and expressions in the catalogs. Verify values and missing semantics per version and mode |
+| C11 · oGRAC driver entry | The compared 6.0.6 tag has no such entry or OR protocol classes | `v7.0.0` adds `jdbc:oGRAC:`, `ORConnection`, `ORQueryExecutorImpl`, SSL and type/metadata implementations. The development line additionally adds 36 dedicated test files and modifies `ORResultSet` | The target is the separate oGRAC product and the corresponding protocol. Ordinary openGauss 7.0.0 connections still use the ordinary handshake |
+| C10, E02 · ATF session and transaction recovery | `v6.0.6` already has basic reconnect configuration | `v7.0.0` adds ATF switches, service addresses, caching and result checks (`8c8ea6b` and others) | Dedicated deployment verifies transaction consistency and failure boundaries. Reconnection of the base driver keeps the original request failure semantics |
+| T09 · Multi-vector concurrent queries | `v6.0.6` has no `util/ParallelSearch.java` | `v7.0.0` adds a Java client query helper class (`d2950de`) | The 7.0.0 enterprise edition release notes record native vector storage and indexes. Query the target environment's extensions, operators, types and indexes separately, and decide the .NET API after verification |
+| E06, E07 · COPY and streaming resource boundaries | Legacy tags already have COPY and streaming parameters | `v7.0.0` adds `maxCopyDataReceiveBytes`, `maxBufferedStreamParameterChars`, and adds tests | Client resource limits apply to each supported version. Actual COPY formats and cancellation semantics of each version still require live-server verification |
+| C05, E11 · TLS and replication hardening | Existing TLS validation and replication paths | `v7.0.0` hardens the certificate verification path and replication slot identifier validation, and adds resource boundary tests | Include the applicable security behavior in the shared .NET implementation, each environment uses the same validation rules |
 
-## 服务端验收状态
+## Server acceptance status
 
-| 服务端 | A | B | PG | 其他组合 |
+| Server | A | B | PG | Other combinations |
 | --- | --- | --- | --- | --- |
-| openGauss 6.0.6 LTS | 待验证 | 待验证 | 待验证 | 6.0.0 建库文档另列 C 模式。发行形态、主备、扩展分别记录 |
-| openGauss 7.0.0 LTS | 待验证 | 待验证 | 待验证 | 企业版发行说明涉及 D 库，按可用环境确认 |
-| 较旧版本 | 候选 | 候选 | 候选 | JDBC 5.0.3 作为版本差异证据。服务端补丁版按实际部署需求选取 |
-| oGRAC 7.0.0 LTS | 专项待评估 | 专项待评估 | 专项待评估 | 实际支持模式以 oGRAC 环境为准 |
+| openGauss 6.0.6 LTS | Pending verification | Pending verification | Pending verification | The 6.0.0 database creation documentation separately lists mode C. Distribution form, primary/standby and extensions are recorded separately |
+| openGauss 7.0.0 LTS | Pending verification | Pending verification | Pending verification | The enterprise edition release notes involve database D, confirm according to the available environments |
+| Older versions | Candidate | Candidate | Candidate | JDBC 5.0.3 serves as version difference evidence. Server patch releases are selected according to actual deployment needs |
+| oGRAC 7.0.0 LTS | Dedicated evaluation pending | Dedicated evaluation pending | Dedicated evaluation pending | Actual supported modes are subject to the oGRAC environment |
 
-服务端 7.0.0 企业版发行说明明确记录 D 库的默认兼容选项变化，升级可保留原配置。版本识别和功能探测因此需要同时记录产品、版本、模式和实际会话配置。用户环境的实装版本与升级历史待确认。每个功能可按组合登记为源码已确认、离线通过、联机通过、环境缺失、服务端不适用或驱动待实现。判断服务端不适用时记录实际响应、发行版本或上游对照。 [开发进度](opengauss-connector-progress.md)
+The server 7.0.0 enterprise edition release notes explicitly record the change of the default compatibility option of database D, and an upgrade can keep the original configuration. Version identification and capability probing therefore need to record the product, version, mode and actual session configuration at the same time. The installed version and upgrade history of the user environment are to be confirmed. Each feature can be registered per combination as source-confirmed, offline pass, live-server pass, environment missing, server not applicable or driver implementation pending. When judging the server not applicable, record the actual response, release version or upstream comparison. [Development progress](opengauss-connector-progress.md)

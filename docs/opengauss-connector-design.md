@@ -1,104 +1,104 @@
-# OpenGaussConnector 驱动设计
+# OpenGaussConnector Driver Design
 
-2026-11-24 · 设计提案
+2026-11-24 · Design proposal
 
-## 范围
+## Scope
 
-基于 openGauss 官方 ADO.NET 驱动移植托管驱动。核心 NuGet 包提供 `netstandard2.0`、`netstandard2.1`、`net8.0`、`net9.0`、`net10.0` 五组资产。以 openGauss JDBC 发布标签和服务端文档为协议与行为参考，按实际需求补齐能力。版本和源码基线见 [参考资料](references.md)。
+Port a managed driver based on the official openGauss ADO.NET driver. The core NuGet package provides five sets of assets: `netstandard2.0`, `netstandard2.1`, `net8.0`, `net9.0` and `net10.0`. Use the openGauss JDBC release tags and server documentation as the protocol and behavior reference, and fill in capabilities according to actual needs. For versions and source baselines see [References](references.md).
 
-首发交付范围包括核心驱动、依赖注入包和官方 ADO.NET 的五个扩展包。核心覆盖连接与认证、TLS、参数化执行、事务、结果读取、基础类型、连接池和核心元数据。COPY、多主机和特殊类型按矩阵优先级验证，可在同一发布周期通过验收后纳入支持范围。EF Core、oGRAC、全密态、TLCP 和复制输出插件各自保留独立评估项。 [功能矩阵](opengauss-connector-feature-matrix.md)
+The initial delivery scope covers the core driver, the dependency injection package and the five extension packages of the official ADO.NET driver. The core covers connections and authentication, TLS, parameterized execution, transactions, result reading, base types, connection pooling and core metadata. COPY, multi-host and special types are verified according to matrix priority and can be included in the supported scope after passing acceptance within the same release cycle. EF Core, oGRAC, full encryption, TLCP and the replication output plugin each keep a separate evaluation item. [Feature matrix](opengauss-connector-feature-matrix.md)
 
-## 移植路线
+## Porting route
 
-| 路线 | 影响 |
+| Route | Impact |
 | --- | --- |
-| 移植官方 ADO.NET 快照，逐项升级 | 复用连接、管线、类型处理、生成器和测试，能追踪行为变化。作为本项目的方案。 |
-| 从现代 Npgsql 重新分叉 | 可复用现代 API，需重新引入 openGauss 启动、认证与系统目录差异，并处理五个 TFM 的覆盖。 |
-| 以 JDBC 为主重写 | 能沿用 Java 侧行为模型，ADO.NET 对象、异步取消、池化、资源生命周期和类型映射需要重新实现。 |
+| Port the official ADO.NET snapshot and upgrade item by item | Reuses connections, pipeline, type handling, generator and tests, and can track behavior changes. This is the approach for this project. |
+| Fork again from modern Npgsql | Modern APIs can be reused, but openGauss startup, authentication and system catalog differences must be reintroduced, and coverage of the five TFMs handled. |
+| Rewrite primarily from JDBC | The Java-side behavior model can be followed, but ADO.NET objects, asynchronous cancellation, pooling, resource lifetimes and type mapping must be reimplemented. |
 
-第一轮导入保留上游目录与文件来源记录，机械重命名、构建适配和协议行为改动各自提交。生成器的模板、测试夹具和许可证随对应实现迁移。后续引入的代码或测试记录来源仓库、提交和文件路径。同一功能优先以 JDBC 与服务端实现建立行为测试，再调整已有 .NET 代码。遇到大范围上游演进时，按子系统评估移植成本。 [M1 开工清单](opengauss-connector-m1.md)
+The first import round keeps the upstream directory and file provenance records; mechanical renames, build adaptations and protocol behavior changes are committed separately. The generator's templates, test fixtures and licenses move with the corresponding implementation. Code or tests introduced later record the source repository, commit and file path. For the same feature, first establish behavior tests against the JDBC and server implementations, then adjust the existing .NET code. When large-scale upstream evolution occurs, evaluate porting cost per subsystem. [M1 kickoff checklist](opengauss-connector-m1.md)
 
-## 解决方案与包
+## Solution and packages
 
-| 元素 | 拟采用 |
+| Element | Proposed choice |
 | --- | --- |
-| 解决方案 | `OpenGaussConnector.slnx`，含 `src/` 与 `tests/` |
-| 核心项目 | `src/OpenGaussConnector/OpenGaussConnector.csproj` |
-| 核心程序集与根命名空间 | `AssemblyName` 和 `RootNamespace` 为 `OpenGaussConnector`，产物为 `OpenGaussConnector.dll` |
-| 核心 NuGet 包 | `PackageId` 为 `OpenGaussConnector` |
-| 依赖注入 NuGet 包 | `src/OpenGaussConnector.DependencyInjection/OpenGaussConnector.DependencyInjection.csproj`，包 ID 和程序集名为 `OpenGaussConnector.DependencyInjection`，与核心库同版本发布，提供五组目标资产 |
-| Provider invariant name | 拟用 `OpenGaussConnector`，以 `OpenGaussFactory.Instance` 为注册入口 |
-| 现有公共类型 | 保留 `OpenGaussConnection`、`OpenGaussCommand`、`OpenGaussDataReader`、`OpenGaussTransaction`、`OpenGaussParameter`、`OpenGaussConnectionStringBuilder` 等类型名。其中的命名空间、程序集身份和工厂注册随项目迁移。 |
-| 五个官方扩展的移植包 | GeoJSON、Json.NET、NetTopologySuite、NodaTime、OpenTelemetry。项目、程序集和包 ID 见下表。 |
-| 生成器与测试 | 生成器拟保留 `netstandard2.0`，作为内部构建项目。测试及基准显式标记为不可打包。 |
+| Solution | `OpenGaussConnector.slnx`, containing `src/` and `tests/` |
+| Core project | `src/OpenGaussConnector/OpenGaussConnector.csproj` |
+| Core assembly and root namespace | `AssemblyName` and `RootNamespace` are `OpenGaussConnector`, output is `OpenGaussConnector.dll` |
+| Core NuGet package | `PackageId` is `OpenGaussConnector` |
+| Dependency injection NuGet package | `src/OpenGaussConnector.DependencyInjection/OpenGaussConnector.DependencyInjection.csproj`, package ID and assembly name are `OpenGaussConnector.DependencyInjection`, released with the same version as the core library, providing five sets of target assets |
+| Provider invariant name | Planned to use `OpenGaussConnector`, with `OpenGaussFactory.Instance` as the registration entry point |
+| Existing public types | Keep type names such as `OpenGaussConnection`, `OpenGaussCommand`, `OpenGaussDataReader`, `OpenGaussTransaction`, `OpenGaussParameter`, `OpenGaussConnectionStringBuilder`. Their namespaces, assembly identity and factory registration move with the project. |
+| Port packages for the five official extensions | GeoJSON, Json.NET, NetTopologySuite, NodaTime, OpenTelemetry. Projects, assemblies and package IDs are in the table below. |
+| Generator and tests | The generator is planned to keep `netstandard2.0` as an internal build project. Tests and benchmarks are explicitly marked as not packable. |
 
-在可打包项目中显式声明 `PackageId`。六个扩展包与核心包使用同一个项目版本，并参考 OB 以对应发布版本作为核心依赖下限。打包时检查实际 `.nuspec` 中的依赖 ID 和版本范围。各包的 NuGet.org 查询结果见 [参考资料](references.md)。
+Explicitly declare `PackageId` in packable projects. The six extension packages and the core package use the same project version, and following OB, the corresponding release version serves as the lower bound of the core dependency. When packing, check the dependency IDs and version ranges in the actual `.nuspec`. NuGet.org query results for each package are in [References](references.md).
 
-从官方 `OpenGauss.NET` 迁移时，应用需要重新编译并更新 `using`、程序集限定类型名、工厂注册和第三方插件引用。同进程共存由消费测试验证。上游的连接字符串键、SQLSTATE 和核心公共类型语义作为迁移基线。任何涉及时间、认证或证书默认行为的变化在发布说明中逐项列出。现有绑定身份和强命名签名并入 M1 评估，签名使用项目自己的身份。
+When porting from the official `OpenGauss.NET`, applications need to be recompiled and their `using` directives, assembly-qualified type names, factory registration and third-party plugin references updated. In-process coexistence is verified by consumer tests. The upstream connection string keys, SQLSTATE and core public type semantics serve as the porting baseline. Any change involving time, authentication or certificate default behavior is listed item by item in the release notes. The existing binding identity and strong-name signature are folded into the M1 evaluation; signing uses the project's own identity.
 
-## 目标框架与集中包管理
+## Target frameworks and central package management
 
-根目录 `Directory.Build.props` 集中设置包版本、可空性和确定性构建。根 `Directory.Packages.props` 启用 `ManagePackageVersionsCentrally`，按 `$(TargetFramework)` 定义 `PackageVersion`，项目文件只在需要依赖的 TFM 上声明无版本的 `PackageReference`。直接依赖版本在 M1 由恢复结果和消费测试确认。不设 `global.json` 固定 SDK 版本，直接使用开发机已安装的 .NET 10 SDK，实际版本记入验收记录。 [Microsoft CPM](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management) · [SLNX](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-sln)
+The root `Directory.Build.props` centrally sets package versions, nullability and deterministic builds. The root `Directory.Packages.props` enables `ManagePackageVersionsCentrally`, defines `PackageVersion` per `$(TargetFramework)`, and project files declare versionless `PackageReference` only on the TFMs that need the dependency. Every packaged dependency is declared as a NuGet range rather than a fixed version, and the ranges are confirmed in M1 by restore results and consumer tests. No `global.json` pins the SDK version; the .NET 10 SDK installed on the development machine is used directly, and the actual version is recorded in the acceptance record. [Microsoft CPM](https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management) · [SLNX](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-sln)
 
-| TFM | 依赖与 API 策略 | 消费验证 |
+| TFM | Dependency and API strategy | Consumption verification |
 | --- | --- | --- |
-| `netstandard2.0` | 逐项评估 `Microsoft.Bcl.HashCode`、`System.Text.Json`、`System.Threading.Channels`、`System.Collections.Immutable`、`DiagnosticSource`、`Unsafe` 等旧包引用。根据代码和选定宿主确定可恢复的最低版本。 | 强制加载该资产的测试，再用隔离消费项目查看 `project.assets.json`。.NET Framework 支持声明须经 Windows 上选定版本实测，拟先试 4.8。 |
-| `netstandard2.1` | 单独检查引用程序集与 TFM 资产，保留必要的 BCL 补充依赖。 | 在现代宿主强制加载此资产并执行核心用例，报告中记录实际宿主和选中的 DLL。 |
-| `net8.0` | 优先使用共享框架。需要随框架发行的直接包依赖时，集中声明最低版本 `8.0.0`。 | .NET 8 进程恢复、构建与运行。 |
-| `net9.0` | 优先使用共享框架。需要随框架发行的直接包依赖时，集中声明最低版本 `9.0.0`。 | .NET 9 进程恢复、构建与运行，并记录运行时维护状态。 |
-| `net10.0` | 优先使用共享框架。需要随框架发行的直接包依赖时，集中声明最低版本 `10.0.0`。 | .NET 10 进程恢复、构建与运行。 |
+| `netstandard2.0` | Evaluate legacy package references such as `Microsoft.Bcl.HashCode [6.0.0,)`, `System.Text.Json [10.0.0,)`, `System.Threading.Channels [10.0.0,)`, `System.Collections.Immutable [10.0.0,)`, `System.Diagnostics.DiagnosticSource [10.0.0,)` and `System.Runtime.CompilerServices.Unsafe [6.1.2,)` item by item, and keep the floor restorable from the code and the chosen host. | Tests that force-load this asset, then an isolated consumer project to inspect `project.assets.json`. Any .NET Framework support claim must be measured on the chosen version on Windows; 4.8 is the first candidate. |
+| `netstandard2.1` | Inspect the reference assembly and TFM assets separately, keeping necessary supplementary BCL dependencies. | Force-load this asset in a modern host and run core cases; record the actual host and the selected DLL in the report. |
+| `net8.0` | Prefer the shared framework. When a direct package dependency that ships with the framework is needed, centrally declare the floor `[8.0.0,)`. | .NET 8 process restore, build and run. |
+| `net9.0` | Prefer the shared framework. When a direct package dependency that ships with the framework is needed, centrally declare the floor `[9.0.0,)`. | .NET 9 process restore, build and run, and record the runtime maintenance status. |
+| `net10.0` | Prefer the shared framework. When a direct package dependency that ships with the framework is needed, centrally declare the floor `[10.0.0,)`. | .NET 10 process restore, build and run. |
 
-版本线约定适用于本项目所选随框架发行的依赖，例如 `Microsoft.Extensions.DependencyInjection.Abstractions`、`Microsoft.Extensions.Logging.Abstractions` 和按需引用的 `System.Diagnostics.DiagnosticSource`。各项目按实际使用添加引用。第三方和测试工具独立选版本，编译器生成器依赖仅用于构建。集中声明的是 NuGet 最低版本，验收记录精确解析版本，并测试消费者使用更高兼容补丁版。需要传递锁定时先验证其对发布依赖组的影响。 [参考资料](references.md) · [.NET Standard](https://learn.microsoft.com/en-us/dotnet/standard/net-standard)
+The version-line convention applies to the framework-shipping dependencies chosen by this project, such as `Microsoft.Extensions.DependencyInjection.Abstractions`, `Microsoft.Extensions.Logging.Abstractions` and `System.Diagnostics.DiagnosticSource` when referenced as needed. Each project adds references according to actual use. Third-party libraries and test tooling choose versions independently; compiler generator dependencies are for build only. What is centrally declared is the NuGet range: framework packages use an open floor and third-party plugins a floor capped at the next major version, so the acceptance record captures the exact resolved version and tests consumers using a higher compatible patch version. When transitive pinning is needed, first verify its impact on the released dependency set. [References](references.md) · [.NET Standard](https://learn.microsoft.com/en-us/dotnet/standard/net-standard)
 
-审计老源码的 `NET5_0`、`NET6_0`、`NETCOREAPP3_1` 与 Standard 分支，用相应能力条件替代只命中旧 TFM 的分支。现有 `OpenGaussBatch` 与 `CreateBatch` 随核心移植。现代目标使用平台 `DbBatch`，Standard 的上游基线通过 `Shims/Batching.cs` 提供同名类型。分别验证每组资产的批量入口，以及 Standard 编译的调用方在现代宿主上的程序集绑定。现代目标增加 `DbDataSource` 实现供 DI 及直接调用。新 API 在签名基线中标明可用的目标框架。Microsoft 的支持策略页面将 .NET 8 和 .NET 9 的支持结束日期列为 2026-11-10。这两组 TFM 仍按项目要求打包和验证，发布文档记录宿主维护状态。 [.NET 支持策略](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core)
+Audit the `NET5_0`, `NET6_0`, `NETCOREAPP3_1` and Standard branches in the legacy source, replacing branches that only match legacy TFMs with the corresponding capability conditions. The existing `OpenGaussBatch` and `CreateBatch` port along with the core. Modern targets use the platform `DbBatch`; the Standard upstream baseline provides a same-named type through `Shims/Batching.cs`. Verify the batch entry point of each asset set separately, and the assembly binding of a Standard-compiled caller on a modern host. Modern targets add a `DbDataSource` implementation for DI and direct use. New APIs mark the target frameworks where they are available in the signature baseline. Microsoft's support policy page lists 2026-11-10 as the end of support for .NET 8 and .NET 9. These two TFM sets are still packed and verified as required by the project, and the release documentation records host maintenance status. [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core)
 
-## 依赖注入
+## Dependency injection
 
-参考 OB 的 `OceanBaseServiceCollectionExtensions.cs`。在 `Microsoft.Extensions.DependencyInjection` 命名空间提供扩展方法。应用可按需安装 DI 包，核心包可独立使用。
+Refer to OB's `OceanBaseServiceCollectionExtensions.cs`. Provide extension methods in the `Microsoft.Extensions.DependencyInjection` namespace. Applications can install the DI package as needed; the core package can be used standalone.
 
-| API | 可用资产 | 生命周期和所有权 |
+| API | Available assets | Lifetime and ownership |
 | --- | --- | --- |
-| `AddOpenGaussConnection(connectionString)` | 五组 TFM | 注册瞬态 `OpenGaussConnection`。每次解析得到未打开的连接，由解析它的作用域负责释放。已有 `DbConnection` 注册优先，空缺时添加别名。 |
-| `AddOpenGaussDataSource(connectionString, configure)` | .NET 8/9/10 | 注册单例 `OpenGaussDataSource`，由容器释放。已有 `DbDataSource` 注册优先，空缺时添加别名。`configure` 为 `(IServiceProvider, OpenGaussDataSourceBuilder)`。 |
-| `AddKeyedOpenGaussDataSource(serviceKey, connectionString, configure)` | .NET 8/9/10 | 每个服务键拥有独立数据源和连接池。具体类型与 `DbDataSource` 按同一个键解析成同一实例。`configure` 同上。 |
+| `AddOpenGaussConnection(connectionString)` | Five TFMs | Registers a transient `OpenGaussConnection`. Each resolve yields an unopened connection, and the scope that resolved it is responsible for disposal. An existing `DbConnection` registration takes precedence; an alias is added when it is absent. |
+| `AddOpenGaussDataSource(connectionString, configure)` | .NET 8/9/10 | Registers a singleton `OpenGaussDataSource`, disposed by the container. An existing `DbDataSource` registration takes precedence; an alias is added when it is absent. `configure` is `(IServiceProvider, OpenGaussDataSourceBuilder)`. |
+| `AddKeyedOpenGaussDataSource(serviceKey, connectionString, configure)` | .NET 8/9/10 | Each service key owns an independent data source and connection pool. The concrete type and `DbDataSource` resolve to the same instance for the same key. `configure` is as above. |
 
-现代 TFM 的核心库提供 `OpenGaussDataSource` 和 `OpenGaussDataSourceBuilder`。数据源持有自己的 `ConnectorSource`，因此同一连接串建出的多个数据源之间不共享池，也不受进程级池管理影响；从数据源创建的连接不能再改连接串，释放连接即归还该数据源的池，释放数据源即释放池。DI 可从容器取得 `ILoggerFactory`，数据源配置回调可覆盖默认工厂；但核心日志当前是进程级静态提供程序（`OpenGaussLogManager.Provider`），改为按数据源传递需要改动日志入口，作为 M1 的后续项跟踪。验证注册冲突、重复服务键、自动释放、关闭后的使用、跨作用域单例和日志工厂归属。同一数据源可通过具体类型和基类别名解析，释放须幂等。
+The core library for modern TFMs provides `OpenGaussDataSource` and `OpenGaussDataSourceBuilder`. A data source holds its own `ConnectorSource`, so multiple data sources built from the same connection string do not share a pool and are not affected by process-level pool management; connections created from a data source cannot change their connection string, disposing a connection returns it to that data source's pool, and disposing the data source disposes the pool. DI can obtain `ILoggerFactory` from the container, and the data source configuration callback can override the default factory; but core logging is currently a process-level static provider (`OpenGaussLogManager.Provider`), so passing it per data source would require changing the logging entry point and is tracked as a follow-up item in M1. Verify registration conflicts, duplicate service keys, automatic disposal, use after disposal, singletons across scopes and logging factory ownership. The same data source can be resolved through the concrete type and the base type alias, and disposal must be idempotent.
 
-| 资产 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `Microsoft.Extensions.Logging.Abstractions` | `Microsoft.Extensions.DependencyInjection` |
+| Assets | `Microsoft.Extensions.DependencyInjection.Abstractions` | `Microsoft.Extensions.Logging.Abstractions` | `Microsoft.Extensions.DependencyInjection` |
 | --- | --- | --- | --- |
-| `netstandard2.0`、`netstandard2.1` | `8.0.0` | `8.0.0` | `8.0.0` |
-| `net8.0` | `8.0.0` | `8.0.0` | `8.0.0` |
-| `net9.0` | `9.0.0` | `9.0.0` | `9.0.0` |
-| `net10.0` | `10.0.0` | `10.0.0` | `10.0.0` |
+| `netstandard2.0`, `netstandard2.1` | `[8.0.0,)` | `[8.0.0,)` | `[8.0.0,)` |
+| `net8.0` | `[8.0.0,)` | `[8.0.0,)` | `[8.0.0,)` |
+| `net9.0` | `[9.0.0,)` | `[9.0.0,)` | `[9.0.0,)` |
+| `net10.0` | `[10.0.0,)` | `[10.0.0,)` | `[10.0.0,)` |
 
-这些版本由根 CPM 按 TFM 定义。Standard 两组暂取 `8.0.0`，优先兼顾已有 8.x 消费端。DI 包直接引用 DI Abstractions；实现日志接入时再引用 Logging Abstractions。完整 DI 容器包用于测试和示例，核心包依赖仅在使用相应 API 时声明。发布前从本地包源消费核心与 DI 包，检查五组 `.nuspec` 依赖下限，以及最低版本和已选补丁版本的恢复与运行。 [OB 与 NuGet 元数据](references.md)
+These versions are defined per TFM by the root CPM. Every dependency of a published package is declared as a NuGet range, so a consumer can take a newer patch or minor release without waiting for a new release of this provider: framework and `Microsoft.Extensions.*` packages use an open floor (`[8.0.0,)`), and third-party plugins use a floor capped at the next major version (`[1.4.1,2.0.0)`). The two Standard sets provisionally take `[8.0.0,)`, prioritizing compatibility with existing 8.x consumers. The DI package references DI Abstractions directly; Logging Abstractions is referenced when logging integration is implemented. The full DI container package is used for tests and samples, and core package dependencies are declared only when the corresponding APIs are used. Packing is followed by `eng/Verify-Packages.ps1`, which checks the dependency ranges in the seven `.nuspec` files and then restores, builds and runs throwaway consumers from a local package source. [OB and NuGet metadata](references.md)
 
-## 官方 ADO.NET 扩展包
+## Official ADO.NET extension packages
 
-上游目标与依赖版本来自固定快照的项目文件，作为移植起点。下表的新包 ID 同时作为项目及程序集名称。五个扩展与核心、DI 使用相同的五个目标框架。第三方库按各自的资产与 API 选定 CPM 版本，验证后记录精确解析结果。上游扩展方法统一从 `OpenGauss.NET` 暴露，迁移后保留方法名，应用改用 `OpenGaussConnector` 导入这些方法。 [上游项目清单](references.md)
+The upstream targets and dependency versions come from the project files of the pinned snapshot and serve as the porting starting point. The new package IDs in the table below also serve as project and assembly names. The five extensions use the same five target frameworks as the core and DI. Third-party libraries choose their CPM versions according to their own assets and APIs, and the exact resolved results are recorded after verification. Upstream extension methods are all exposed from `OpenGauss.NET`; after the port the method names are kept and applications import these methods from `OpenGaussConnector` instead. [Upstream project inventory](references.md)
 
-| 上游项目 | 新包 ID | 目标框架与直接依赖（移植后） | 保留的注册入口和能力 |
+| Upstream project | New package ID | Target frameworks and direct dependencies (after port) | Retained registration entry point and capabilities |
 | --- | --- | --- | --- |
-| `OpenGauss.GeoJSON.NET` | `OpenGaussConnector.GeoJSON` | 五组 TFM，`GeoJSON.Net 1.4.1`（上游 1.2.19 依赖有漏洞的 `Newtonsoft.Json 10.0.2`） | `UseGeoJson`，将 PostGIS `geometry`、`geography` 的 EWKB 值与 GeoJSON 对象互转，保留默认类型、包围盒和旧 CRS 选项 |
-| `OpenGauss.Json.NET` | `OpenGaussConnector.Json.NET` | 五组 TFM，`Newtonsoft.Json 13.0.3` | `UseJsonNet`，支持 `json`、`jsonb`、CLR 类型注册和 `JsonSerializerSettings` |
-| `OpenGauss.NetTopologySuite` | `OpenGaussConnector.NetTopologySuite` | 五组 TFM，`NetTopologySuite.IO.PostGIS 2.1.0` | `UseNetTopologySuite`，映射 `geometry`、`geography` 与 NTS 类型，保留精度模型、坐标序列、维度和默认类型配置 |
-| `OpenGauss.NodaTime.NET` | `OpenGaussConnector.NodaTime` | 五组 TFM，`NodaTime 3.0.9` | `UseNodaTime`，移植日期、时间、时间戳、间隔与有服务端证据的范围类型 |
-| `OpenGauss.OpenTelemetry.NET` | `OpenGaussConnector.OpenTelemetry` | 五组 TFM，`OpenTelemetry 1.20.1`（上游引用的 `OpenTelemetry.API 1.1.0` 既不含 `TracerProviderBuilder`，也受 CVE-2026-40894 影响；1.20.1 的传递依赖仍停在 10.x） | `AddOpenGauss`，订阅核心 `ActivitySource` 并验证命令跟踪 |
+| `OpenGauss.GeoJSON.NET` | `OpenGaussConnector.GeoJSON` | Five TFMs, `GeoJSON.Net [1.4.1,2.0.0)` (upstream 1.2.19 depends on the vulnerable `Newtonsoft.Json 10.0.2`) | `UseGeoJson`, converting EWKB values of PostGIS `geometry` and `geography` to and from GeoJSON objects, retaining default type, bounding box and legacy CRS options |
+| `OpenGauss.Json.NET` | `OpenGaussConnector.Json.NET` | Five TFMs, `Newtonsoft.Json [13.0.4,14.0.0)` | `UseJsonNet`, supporting `json`, `jsonb`, CLR type registration and `JsonSerializerSettings` |
+| `OpenGauss.NetTopologySuite` | `OpenGaussConnector.NetTopologySuite` | Five TFMs, `NetTopologySuite.IO.PostGIS [2.1.0,3.0.0)` | `UseNetTopologySuite`, mapping `geometry` and `geography` to NTS types, retaining precision model, coordinate sequence, dimension and default type configuration |
+| `OpenGauss.NodaTime.NET` | `OpenGaussConnector.NodaTime` | Five TFMs, `NodaTime [3.3.7,4.0.0)` | `UseNodaTime`, porting date, time, timestamp, interval and the range types that have server-side evidence |
+| `OpenGauss.OpenTelemetry.NET` | `OpenGaussConnector.OpenTelemetry` | Five TFMs, `OpenTelemetry [1.20.1,2.0.0)` (the `OpenTelemetry.API 1.1.0` referenced upstream neither contains `TracerProviderBuilder` nor is free of CVE-2026-40894; 1.21.0 is the newest release, but it pulls `Microsoft.Extensions.*` 11.0.0, so 1.20.1 is the newest usable release) | `AddOpenGauss`, subscribing to the core `ActivitySource` and verifying command tracing |
 
-- **映射隔离**。保留上游类型映射扩展方法，现代 DataSource Builder 提供同一映射入口，供 DI 回调配置。按数据源或连接隔离映射设置，分别验证 GeoJSON/NTS 和内置 JSON/Json.NET 的解析优先级。两个 GIS 包检查服务端扩展、类型 OID、SRID、坐标维度与实际 EWKB。6.0.0 的 PostGIS 文档列出 `geometry` 和 `geography`，7.0.0 扩展说明列出 PostGIS 2.4.2。联机时记录实际安装版本，并验证扩展缺失时的行为。保留 `ShortCRS` 和 `LongCRS` 兼容选项，说明驱动映射保留源坐标，验证对外标为 RFC 7946 的 GeoJSON 使用 WGS 84 经纬度。 [OG11、EXT1、EXT2](references.md)
-- **Json.NET 与 NodaTime**。Json.NET 验证 POCO、JSON token、NULL、文本与二进制以及自定义设置。默认避免从数据启用多态类型解析，客户显式启用该模式时按 Json.NET 指南处理类型限制。NodaTime 验证当前及旧时间语义、时区和无穷值，含月或年的间隔使用 `Period` 路径，固定时长使用 `Duration`。范围和多范围读取取决于各环境的类型能力。 [EXT3、EXT4](references.md)
-- **OpenTelemetry**。旧 `AddOpenGauss` 订阅 `OpenGauss`，其 `options` 参数未应用。移植时统一核心发射端与扩展订阅端的 source 名，检查同进程与旧包共存是否重复采集。按数据库 span 规范设计标签和异常事件。默认不采集原始连接串、用户名、未清理 SQL、参数值或可能含敏感内容的错误详情。验收包含监听、生效的配置项、成功与异常路径及脱敏输出。 [EXT5、EXT6](references.md)
-- **迁移上游测试**。把插件、NodaTime、ADO.NET 规范和裁剪测试接入 SLNX，修复旧项目引用和目标框架。GeoJSON 与 NTS 的旧测试受条件编译控制，CI 明确启用并记录实际执行数量。补充 OpenTelemetry 的监听场景。基准随迁移保留独立入口。 [上游项目清单](references.md)
+- **Mapping isolation**. Keep the upstream type mapping extension methods, and have the modern DataSource Builder provide the same mapping entry point for DI callback configuration. Isolate mapping settings per data source or connection, verifying the resolution precedence of GeoJSON/NTS and built-in JSON/Json.NET separately. The two GIS packages check server extensions, type OIDs, SRIDs, coordinate dimensions and actual EWKB. The 6.0.0 PostGIS documentation lists `geometry` and `geography`, and the 7.0.0 extension notes list PostGIS 2.4.2. Record the actually installed version when against a live server, and verify behavior when the extension is absent. Keep the `ShortCRS` and `LongCRS` compatibility options, document that the driver mapping preserves source coordinates, and verify that GeoJSON labeled RFC 7946 externally uses WGS 84 longitude/latitude. [OG11, EXT1, EXT2](references.md)
+- **Json.NET and NodaTime**. Json.NET verifies POCOs, JSON tokens, NULL, text and binary, and custom settings. By default avoid enabling polymorphic type resolution from data; when a customer explicitly enables that mode, handle type restrictions per the Json.NET guidance. NodaTime verifies current and legacy time semantics, time zones and infinite values; intervals containing months or years use the `Period` path, and fixed durations use `Duration`. Range and multirange reads depend on each environment's type capabilities. [EXT3, EXT4](references.md)
+- **OpenTelemetry**. The legacy `AddOpenGauss` subscribes to `OpenGauss`, and its `options` parameter is not applied. During the port, unify the source names on the core emitting side and the extension subscribing side, and check whether in-process coexistence with the legacy package causes duplicate collection. Design tags and exception events per the database span specification. By default do not collect raw connection strings, user names, unsanitized SQL, parameter values or error details that may contain sensitive content. Acceptance includes listening, the configuration items in effect, success and exception paths, and redacted output. [EXT5, EXT6](references.md)
+- **Migrating upstream tests**. Bring the plugin, NodaTime, ADO.NET specification and trimming tests into the SLNX, and fix legacy project references and target frameworks. The legacy GeoJSON and NTS tests are guarded by conditional compilation; CI enables them explicitly and records the actual executed count. Add the listening scenarios for OpenTelemetry. Benchmarks keep an independent entry point along with the port. [Upstream project inventory](references.md)
 
-## 驱动分层
+## Driver layering
 
 ```mermaid
 flowchart TD
-    App[应用和 ADO.NET 公共 API]
-    Pool[逻辑连接与连接池]
-    Session[物理会话和协议状态机]
-    Codec[类型转换和元数据]
-    Wire[TCP 或 TLS 与读写缓冲]
+    App[Application and ADO.NET public API]
+    Pool[Logical connections and connection pool]
+    Session[Physical sessions and protocol state machine]
+    Codec[Type conversion and metadata]
+    Wire[TCP or TLS and read/write buffers]
     DB[openGauss]
     App --> Pool
     Pool --> Session
@@ -107,57 +107,57 @@ flowchart TD
     Wire --> DB
 ```
 
-### 启动、认证与连接
+### Startup, authentication and connections
 
-- 以 ADO 源码固定使用的 3.51 建立基线，按 JDBC 标签对照 3.0、3.50、3.51 的启动报文与认证分支。兼容协议选择须有具体服务端用例佐证。认证失败和证书校验失败直接返回，避免应用误判为网络问题后重试。
-- ADO 的请求号 10 实际走 openGauss SHA256 路径。其源码另有 PostgreSQL SCRAM 方法。JDBC 将请求号 11 和 13 分别用于 MD5-SHA256 与 SM3，ADO 的旧枚举将 11 用于 SASL continue。实现应在启动协议信息与认证状态的上下文中解释请求号。以标签源码、可复现的服务端配置、成功与失败用例固定行为。
-- TLS 沿用 `SslStream` 入口，移植基线保留 `Prefer` 默认值及旧版 `Require` 对显式 `Trust Server Certificate` 的要求。服务端身份验证用例使用 `VerifyCA` 或 `VerifyFull`，其中 `VerifyFull` 同时覆盖主机名。验证客户端证书、证书拒绝、取消和超时路径。认证挑战值、密钥、凭据和命令参数默认从诊断输出中过滤。
-- 新建物理连接阶段可以依策略选择下个候选主机。已开始执行的语句和事务在连接中断时向调用方报告失败，结果不明的写入或提交由业务判断。连接池只回收状态已明确恢复的连接，对协议不同步、取消失败或重置失败的物理连接执行销毁。
-- 连接池按连接配置隔离，验证角色变化、池键、会话状态复位、预准备缓存和已有事务状态。JDBC 的自动拓扑、语句分流和 ATF 各自研究，并记录所需版本和组件。 [功能矩阵](opengauss-connector-feature-matrix.md)
+- Establish the baseline with 3.51, which the ADO source uses fixed, and compare the startup messages and authentication branches of 3.0, 3.50 and 3.51 against the JDBC tags. Selection of a compatibility protocol must be backed by specific server-side cases. Authentication failures and certificate validation failures return directly, so that applications do not misread them as network problems and retry.
+- Request code 10 in ADO actually takes the openGauss SHA256 path. Its source also contains PostgreSQL SCRAM methods. JDBC uses request codes 11 and 13 for MD5-SHA256 and SM3 respectively, while ADO's legacy enum uses 11 for SASL continue. The implementation should interpret request codes in the context of startup protocol information and authentication state. Pin behavior with tag sources, reproducible server configurations, and success and failure cases.
+- TLS keeps the `SslStream` entry point; the porting baseline retains the `Prefer` default and the legacy `Require` requirement for an explicit `Trust Server Certificate`. Server identity verification cases use `VerifyCA` or `VerifyFull`, where `VerifyFull` also covers the host name. Verify client certificates, certificate rejection, cancellation and timeout paths. Authentication challenges, keys, credentials and command parameters are filtered from diagnostic output by default.
+- While establishing a new physical connection, the next candidate host can be chosen according to policy. Statements and transactions already executing report failure to the caller on connection loss; writes or commits with unknown results are left to the business to judge. The connection pool only returns connections whose state has been explicitly restored, and destroys physical connections that are protocol-out-of-sync, whose cancellation failed or whose reset failed.
+- Pools are isolated by connection configuration; verify role changes, pool keys, session state reset, the prepared statement cache and existing transaction state. JDBC's automatic topology, statement routing and ATF are each researched, recording the required versions and components. [Feature matrix](opengauss-connector-feature-matrix.md)
 
-### 服务端版本与能力选择
+### Server versions and capability selection
 
-同一 NuGet 包覆盖多个可验证的 openGauss 服务端版本。驱动在物理连接内部确定版本和能力，连接、命令、读取器、COPY 和元数据 API 继续使用同一入口。
+The same NuGet package covers multiple verifiable openGauss server versions. The driver determines the version and capabilities inside the physical connection, and the connection, command, reader, COPY and metadata APIs keep using the same entry point.
 
-1. **启动时**沿用已验证的普通 openGauss 启动协议，按实际认证报文选择对应处理。服务端产品版本通常要在认证后才能确认。若某种协议需要不同的启动报文，由独立的协议配置和对应环境验证处理。
-2. **连接初始化时**保留启动参数 `server_version` 的原始值和现有 `DbConnection.ServerVersion` 语义。使用 `SELECT version()` 中可识别的产品标记与版本号识别 openGauss 产品版本，保留原始结果。针对支持该参数的服务端执行 `SHOW sql_compatibility` 获取数据库兼容模式。识别结果受权限、版本格式或代理影响时，分别记录未知状态。 [OG6、OG13](references.md)
-3. **配置预期版本**。拟新增连接字符串 `Server Version`，默认为 `Auto`。也可填 `6.0.6`、`7.0.0` 等经验证的目标版本。显式配置与可识别产品版本进行比较，冲突时连接初始化报错并关闭该物理连接。版本未知时，显式版本可选择已验证的候选兼容路径，诊断保留版本未知的实际结果。受版本、扩展或拓扑约束的功能仍须满足实际使用条件。
-4. **能力选择**。以已验证版本范围决定候选实现，再依据产品形态、模式、系统目录、扩展与拓扑确认。旧驱动对 range、multirange 和多种 `DISCARD` 操作用 PostgreSQL 版本阈值判断，移植时逐项改为 openGauss 实测或能力探测。可选探测使用固定、只读且有超时的查询。对象不存在、权限不足与网络或协议失败分别处理。未知版本默认使用已验证的基础路径，可选能力在确认后启用。能力未启用时，返回对应的明确错误或使用经验证的兼容路径。
-5. **缓存和升级**。每条新物理连接按实际目标重建能力信息。复用目录元数据时按物理端点、数据库、版本、模式及影响结果的权限和扩展隔离。重连、主备切换、池清理后重新识别。发布验收覆盖旧版到新版替换、同一主机列表混合版本、显式版本冲突与未知版本。既有写入和事务的执行结果由当前连接及其错误状态报告。
+1. **At startup**, follow the verified ordinary openGauss startup protocol and select the corresponding handling based on the actual authentication messages. The server product version usually cannot be confirmed until after authentication. If a protocol needs a different startup message, handle it through separate protocol configuration and validation in the corresponding environment.
+2. **At connection initialization**, retain the raw value of the startup parameter `server_version` and the existing `DbConnection.ServerVersion` semantics. Use the recognizable product marker and version number in `SELECT version()` to identify the openGauss product version, retaining the raw result. For servers that support the parameter, execute `SHOW sql_compatibility` to obtain the database compatibility mode. When identification is affected by permissions, version format or a proxy, record the unknown state separately. [OG6, OG13](references.md)
+3. **Configure the expected version**. Plan to add the connection string `Server Version`, defaulting to `Auto`. It can also be set to verified target versions such as `6.0.6`, `7.0.0`. The explicit configuration is compared with the identifiable product version; on conflict, connection initialization reports an error and closes that physical connection. When the version is unknown, the explicit version may select a verified candidate compatibility path, and diagnostics retain the actual result of an unknown version. Features constrained by version, extensions or topology must still satisfy the actual conditions of use.
+4. **Capability selection**. Use the verified version range to decide candidate implementations, then confirm based on product form, mode, system catalog, extensions and topology. The legacy driver judges range, multirange and various `DISCARD` operations by PostgreSQL version thresholds; during the port, change each to openGauss measurement or capability probing. Optional probes use fixed, read-only queries with timeouts. Object absence, insufficient permission and network or protocol failures are handled separately. Unknown versions default to the verified baseline path, and optional capabilities are enabled after confirmation. When a capability is not enabled, return the corresponding explicit error or use a verified compatibility path.
+5. **Caching and upgrades**. Each new physical connection rebuilds capability information for its actual target. When catalog metadata is reused, isolate it by physical endpoint, database, version, mode and the permissions and extensions that affect results. Re-identify after reconnect, primary/standby switchover or pool clearing. Release acceptance covers replacing an old version with a new one, mixed versions in the same host list, explicit version conflicts and unknown versions. The execution results of existing writes and transactions are reported by the current connection and its error state.
 
-| 场景 | 驱动内部处理 |
+| Scenario | Driver-internal handling |
 | --- | --- |
-| 目录字段在不同版本或模式有差异 | 先确认字段，再选择元数据 SQL。生成列表达式、标志和数据类型按可获取结果填充。 |
-| 某版本提供新扩展或类型 | 从当前数据库目录定位扩展、类型名和 OID。读写路径分别用真实服务端验证文本和二进制格式。 |
-| 服务端回移能力或升级保留原 GUC | 使用探测到的能力和会话状态处理。例见 7.0.0 企业版发行说明中的 D 库默认参数变更。 |
-| COPY 或流式参数需要缓冲限制 | 各版本共用客户端资源限制和明确错误语义。服务端可用的 COPY 格式仍按目标组合分别验证。 |
-| oGRAC、ATF、多向量并发查询 | 分别核对产品协议、服务端组件和扩展，基础驱动通过同一包维护已验证的普通 openGauss 连接路径。 |
+| Catalog fields differ across versions or modes | Confirm the fields first, then choose the metadata SQL. Generated column expressions, flags and data types are filled from the obtainable results. |
+| A version provides a new extension or type | Locate the extension, type name and OID from the current database catalog. Verify text and binary formats on a real server for the read and write paths separately. |
+| The server backports a capability or an upgrade keeps an original GUC | Handle it using the probed capabilities and session state. For an example, see the D database default parameter change in the 7.0.0 enterprise edition release notes. |
+| COPY or streaming parameters need buffer limits | All versions share client-side resource limits and explicit error semantics. COPY formats available on the server are still verified separately per target combination. |
+| oGRAC, ATF, multi-vector concurrent queries | Check the product protocol, server components and extensions separately; the base driver maintains the verified ordinary openGauss connection path through the same package. |
 
-公开发行版本及 JDBC 标签见 [参考资料](references.md)。用户部署的服务端版本与升级情况目前待查，6.0.6 和 7.0.0 是拟建立的验收环境。 [版本差异矩阵](opengauss-connector-feature-matrix.md#jdbc-发布版本差异)
+Public release versions and JDBC tags are in [References](references.md). The server versions deployed by users and their upgrade situation are still to be investigated; 6.0.6 and 7.0.0 are the acceptance environments planned to be established. [Version difference matrix](opengauss-connector-feature-matrix.md#jdbc-release-version-differences)
 
-### 执行、类型与元数据
+### Execution, types and metadata
 
-- 复用 Parse/Bind/Execute/Sync 路径、SQL 参数解析器和读写缓冲。验证命名参数、`$1` 参数、预准备、多结果、批次错误边界及影响行数。用事务内外的错误、超时和取消测试固定连接在失败后的可复用性。
-- 批量执行、批量 SQL 改写与 COPY 有各自的执行语义。先恢复现有批量 API。改写优化需验证语句适用范围、生成键、失败位置和显式事务行为。
-- 基础类型先覆盖字符串、二进制、整数、浮点、布尔、`numeric`、日期时间、UUID 和 JSON。按服务端 OID、类型名和元数据确定文本与二进制能力。连接返回的类型信息与数据库、版本、兼容模式及扩展条件一起记录和隔离，防止连接池交叉使用错误的类型映射。
-- 逐项验证 A、B、PG 的 `numeric` 精度、时区、时间戳、空字符串、标识符、函数和过程语义。保留同一公共参数和读取模型，按需要调整目录查询、OID 处理和 SQL 生成。上游 `CommandType.StoredProcedure` 生成 `SELECT * FROM` 函数调用，作为升级兼容基线。通过显式 `CALL` 验证各模式的过程和输出参数，对公共 API 语义的变化单独记录。
-- `GetSchema` 与结果列元数据优先覆盖用户可见的表、列、主键、索引和约束。单独验证 identity、默认值、生成列、同名表和权限过滤。服务端版本、兼容模式与客户端声明通过连接后采集的证据核对。
+- Reuse the Parse/Bind/Execute/Sync path, the SQL parameter parser and the read/write buffers. Verify named parameters, `$1` parameters, preparation, multiple results, batch error boundaries and affected row counts. Pin the reusability of a connection after failure with error, timeout and cancellation tests inside and outside transactions.
+- Batch execution, batch SQL rewriting and COPY each have their own execution semantics. First restore the existing batch APIs. Rewrite optimizations must verify the statement applicability, generated keys, failure position and explicit transaction behavior.
+- Base types first cover strings, binary, integers, floating point, boolean, `numeric`, date/time, UUID and JSON. Determine text and binary capabilities from the server OID, type name and metadata. Type information returned by a connection is recorded and isolated together with the database, version, compatibility mode and extension conditions, preventing a pool from cross-using the wrong type mapping.
+- Verify A, B and PG `numeric` precision, time zones, timestamps, empty strings, identifiers, and function and procedure semantics item by item. Keep the same public parameter and read model, adjusting catalog queries, OID handling and SQL generation as needed. Upstream `CommandType.StoredProcedure` generates `SELECT * FROM` function calls, which serves as the upgrade compatibility baseline. Verify procedures and output parameters per mode through explicit `CALL`, and record changes in public API semantics separately.
+- `GetSchema` and result column metadata first cover user-visible tables, columns, primary keys, indexes and constraints. Verify identity, default values, generated columns, same-named tables and permission filtering separately. Server version, compatibility mode and client declarations are reconciled against evidence collected after connecting.
 
-## 服务端与构建验收
+## Server and build acceptance
 
-| 环境 | 验证范围 |
+| Environment | Verification scope |
 | --- | --- |
-| openGauss 6.0.6 LTS | 首个功能基线。拟覆盖 A、B、PG，先用单节点建立核心验证，再补主备。 |
-| openGauss 7.0.0 LTS | 同一套核心用例，并复核发行说明中涉及 SQL、类型或目录行为的变更。记录企业版、轻量版等具体形态。 |
-| 旧版本和其他兼容模式 | 候选覆盖由真实部署需求与可获得环境决定，分别记录 5.x、其他兼容模式、扩展和产品发行形态。 |
-| oGRAC 7.0.0 LTS | 独立环境和用例组，核对多实例、连接角色、会话状态和失败行为。 |
+| openGauss 6.0.6 LTS | First feature baseline. Plan to cover A, B and PG, establishing core verification on a single node first, then adding primary/standby. |
+| openGauss 7.0.0 LTS | The same core cases, plus a review of release note changes affecting SQL, type or catalog behavior. Record specific forms such as enterprise edition and lightweight edition. |
+| Legacy versions and other compatibility modes | Candidate coverage is determined by real deployment needs and available environments; record 5.x, other compatibility modes, extensions and product release forms separately. |
+| oGRAC 7.0.0 LTS | A separate environment and case group; check multiple instances, connection roles, session state and failure behavior. |
 
-兼容模式以建库配置和会话查询为准。旧 ADO 测试资料含 A、B、PG 示例，作为首批测试范围。6.0.0 建库文档还列出 C 模式，7.0.0 企业版发行说明涉及 D 库行为。C 和 D 按实际部署条件单独补充。旧连接串项 `Server Compatibility Mode` 有 `None`、`Redshift` 和 `NoTypeLoading`，移植时按上游连接行为处理。对每个声称支持的组合记录服务端构建号、数据库模式、认证方法、TLS 配置、宿主和资产 TFM。 [OG2、OG6、OG13](references.md)
+Compatibility mode follows the database creation configuration and session queries. The legacy ADO test material contains A, B and PG examples, which form the first batch of test scope. The 6.0.0 database creation documentation also lists mode C, and the 7.0.0 enterprise edition release notes involve D database behavior. C and D are added separately according to actual deployment conditions. The legacy connection string item `Server Compatibility Mode` has `None`, `Redshift` and `NoTypeLoading`; handle it per upstream connection behavior during the port. For every combination claimed as supported, record the server build number, database mode, authentication method, TLS configuration, host and asset TFM. [OG2, OG6, OG13](references.md)
 
-提交前运行相应离线用例，发布候选在 Windows 和 Linux 上运行 .NET 8/9/10 的构建与消费测试。拟在每个服务端版本的 A、B、PG 可用组合上用 `net10.0` 运行完整核心联机集，并在每个版本的一个已验证模式上用五组包资产分别运行连接、参数化查询和事务冒烟。核心联机集覆盖参数化 CRUD、提交/回滚/保存点、列元数据、池复用、取消后恢复及失败后的连接处置。TLS、主备、COPY、插件和复制独立记录覆盖条件。出现差异时在同一服务端用固定版本的官方驱动或服务端 SQL 对照，记录具体失败和环境条件。
+Run the relevant offline cases before committing; release candidates run build and consumer tests for .NET 8/9/10 on Windows and Linux. Plan to run the complete core online set with `net10.0` on the available A, B and PG combinations of each server version, and run connection, parameterized query and transaction smoke tests separately with the five package asset sets on one verified mode of each version. The core online set covers parameterized CRUD, commit/rollback/savepoint, column metadata, pool reuse, recovery after cancellation and connection handling after failure. TLS, primary/standby, COPY, plugins and replication record their coverage conditions independently. When a discrepancy appears, compare on the same server using a pinned version of the official driver or server SQL, and record the specific failure and environment conditions.
 
-## 许可证与发布
+## License and release
 
-核心移植保留官方 ADO.NET 中的 openGauss Mulan PSL v2 与 Npgsql 上游声明。逐文件核对复制内容和依赖的分发条款。若引用 JDBC 的代码或测试，复核顶层许可证、文件头和第三方声明。仓库及 NuGet 包保留所需的许可证文本、来源记录和 notices，发布前确认 NuGet 许可元数据、商标素材和签名身份。 [参考资料](references.md)
+The core port retains the openGauss Mulan PSL v2 and Npgsql upstream notices in the official ADO.NET driver. Check the distribution terms of copied content and dependencies file by file. If JDBC code or tests are referenced, review the top-level license, file headers and third-party notices. The repository and NuGet packages retain the required license texts, provenance records and notices; before release confirm the NuGet license metadata, trademark assets and signing identity. [References](references.md)
 
-拟用独立的 0.x 预发行序列，版本与服务端版本分开。发布候选由 `dotnet pack` 生成，逐一检查七个包的 `.nuspec` 包 ID、扩展对核心的依赖下限、五组 `lib/<TFM>/` 资产和各组直接包依赖。同时检查测试与生成器隔离、README、许可证、符号和 Source Link。使用 Package Validation 检查兼容 TFM 的 API，再从本地包源逐包消费，验证资产选择、公开注册 API 和包间依赖。按服务端版本、模式、扩展、拓扑和 TFM 记录联机验收结果。 [MS8](references.md) · [开发进度](opengauss-connector-progress.md)
+Plan to use a separate 0.x prerelease series, with versions decoupled from server versions. Release candidates are produced by `dotnet pack`; check item by item the `.nuspec` package IDs of the seven packages, the lower bound of the extension-to-core dependency, the five `lib/<TFM>/` asset sets and each set's direct package dependencies. Also check test and generator isolation, README, license, symbols and Source Link. Use Package Validation to check APIs across compatible TFMs, then consume package by package from a local package source, verifying asset selection, public registration APIs and inter-package dependencies; `eng/Verify-Packages.ps1` performs this inspection and consumption run from the produced folder, including a `netstandard2.0` and a `netstandard2.1` consumer and `net8.0`/`net9.0`/`net10.0` console programs. Record online acceptance results by server version, mode, extension, topology and TFM. [MS8](references.md) · [Development progress](opengauss-connector-progress.md)
