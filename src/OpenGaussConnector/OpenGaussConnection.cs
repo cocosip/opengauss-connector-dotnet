@@ -65,6 +65,12 @@ namespace OpenGaussConnector
 
         ConnectorSource? _pool;
 
+        /// <summary>
+        /// Set for connections created by an <c>OpenGaussDataSource</c>, which owns the pool and the
+        /// connection string.
+        /// </summary>
+        bool _createdByDataSource;
+
         internal ConnectorSource Pool
         {
             get
@@ -147,6 +153,20 @@ namespace OpenGaussConnector
             => ConnectionString = connectionString;
 
         /// <summary>
+        /// Initializes a connection created by an <c>OpenGaussDataSource</c>: the data source owns the
+        /// connector source (and therefore the pool), and the connection string is fixed.
+        /// </summary>
+        internal OpenGaussConnection(ConnectorSource source, string connectionString, string userFacingConnectionString)
+        {
+            GC.SuppressFinalize(this);
+            _pool = source;
+            Settings = source.Settings;
+            _connectionString = connectionString;
+            _userFacingConnectionString = userFacingConnectionString;
+            _createdByDataSource = true;
+        }
+
+        /// <summary>
         /// Opens a database connection with the property settings specified by the <see cref="ConnectionString"/>.
         /// </summary>
         public override void Open() => Open(false, CancellationToken.None).GetAwaiter().GetResult();
@@ -180,22 +200,7 @@ namespace OpenGaussConnector
             settings.Validate();
             Settings = settings;
 
-            var hostsSeparator = settings.Host?.IndexOf(',');
-            if (hostsSeparator is -1)
-            {
-                if (settings.TargetSessionAttributesParsed is not null &&
-                    settings.TargetSessionAttributesParsed != TargetSessionAttributes.Any)
-                {
-                    throw new NotSupportedException("Target Session Attributes other then Any is only supported with multiple hosts");
-                }
-
-                if (!OpenGaussConnectionStringBuilder.IsUnixSocket(settings.Host!, settings.Port, out _) &&
-                    OpenGaussConnectionStringBuilder.TrySplitHostPort(settings.Host!.AsSpan(), out var newHost, out var newPort))
-                {
-                    settings.Host = newHost;
-                    settings.Port = newPort;
-                }
-            }
+            ConnectorSourceFactory.NormalizeSettings(settings);
 
             // The connection string may be equivalent to one that has already been seen though (e.g. different
             // ordering). Have OpenGaussConnectionStringBuilder produce a canonical string representation
@@ -218,22 +223,7 @@ namespace OpenGaussConnector
             // Really unseen, need to create a new pool
             // The canonical pool is the 'base' pool so we need to set that up first. If someone beats us to it use what they put.
             // The connection string pool can either be added here or above, if it's added above we should just use that.
-            ConnectorSource newPool;
-            if (hostsSeparator.HasValue && hostsSeparator != -1)
-            {
-                if (settings.Multiplexing)
-                    throw new NotSupportedException("Multiplexing is not supported with multiple hosts");
-                if (settings.ReplicationMode != ReplicationMode.Off)
-                    throw new NotSupportedException("Replication is not supported with multiple hosts");
-                newPool = new MultiHostConnectorPool(settings, canonical);
-            }
-            else if (settings.Multiplexing)
-                newPool = new MultiplexingConnectorPool(settings, canonical);
-            else if (settings.Pooling)
-                newPool = new ConnectorPool(settings, canonical);
-            else
-                newPool = new UnpooledConnectorSource(settings, canonical);
-
+            var newPool = ConnectorSourceFactory.Create(settings, canonical);
             _pool = PoolManager.GetOrAdd(canonical, newPool);
             if (_pool == newPool)
             {
@@ -392,6 +382,9 @@ namespace OpenGaussConnector
             set
             {
                 CheckClosed();
+
+                if (_createdByDataSource)
+                    throw new InvalidOperationException("The connection string cannot be changed on a connection created by an OpenGaussDataSource.");
 
                 _userFacingConnectionString = _connectionString = value ?? string.Empty;
                 GetPoolAndSettings();

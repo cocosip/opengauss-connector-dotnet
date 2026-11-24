@@ -1,6 +1,10 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/OpenGaussConnector.DependencyInjection/OpenGaussConnector.DependencyInjection.csproj" />
     <Project Path="src/OpenGaussConnector.SourceGenerators/OpenGaussConnector.SourceGenerators.csproj" />
     <Project Path="src/OpenGaussConnector/OpenGaussConnector.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenGaussConnector.DependencyInjection.Tests/OpenGaussConnector.DependencyInjection.Tests.csproj" />
   </Folder>
 </Solution>

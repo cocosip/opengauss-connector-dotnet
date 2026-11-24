@@ -94,8 +94,10 @@ function Map-Path([string] $rel) {
     return $r
 }
 
-# Files carrying a recorded deviation (D01-D13 in docs/opengauss-connector-import.md).
+# Files with an explained difference. Every entry cites the record that accounts for it;
+# anything not listed here is a defect.
 $expected = @(
+    # Import deviations D01-D15, see docs/opengauss-connector-import.md.
     'src/OpenGaussConnector/Properties/AssemblyInfo.cs'
     'src/OpenGaussConnector/OpenGaussException.cs'
     'src/OpenGaussConnector/PostgresException.cs'
@@ -106,6 +108,8 @@ $expected = @(
     'src/OpenGaussConnector/Types/OpenGaussInterval.cs'
     'src/OpenGaussConnector/Types/OpenGaussTimeSpan.cs'
     'tests/OpenGaussConnector.TrimmingTests/Program.cs'
+    # M1-B: data source support adds an internal constructor and a fixed connection string.
+    'src/OpenGaussConnector/OpenGaussConnection.cs'
 )
 
 # Upstream files with no counterpart: renamed connector files and the dropped NodaTime assembly info.

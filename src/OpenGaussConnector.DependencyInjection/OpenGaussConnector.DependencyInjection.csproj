@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>OpenGaussConnector</RootNamespace>
+    <AssemblyName>OpenGaussConnector.DependencyInjection</AssemblyName>
+    <PackageId>OpenGaussConnector.DependencyInjection</PackageId>
+    <Description>Dependency injection integration for the OpenGaussConnector ADO.NET provider.</Description>
+    <PackageTags>opengauss;postgresql;ado;ado.net;dependency-injection</PackageTags>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <!-- Depend on this provider release or newer, without pinning an exact version. -->
+  <Target Name="PinCorePackageDependency" AfterTargets="_GetProjectReferenceVersions">
+    <ItemGroup>
+      <_ProjectReferencesWithVersions Update="@(_ProjectReferencesWithVersions)" ProjectVersion="[$(Version),)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -59,10 +59,10 @@
 | API | 可用资产 | 生命周期和所有权 |
 | --- | --- | --- |
 | `AddOpenGaussConnection(connectionString)` | 五组 TFM | 注册瞬态 `OpenGaussConnection`。每次解析得到未打开的连接，由解析它的作用域负责释放。已有 `DbConnection` 注册优先，空缺时添加别名。 |
-| `AddOpenGaussDataSource(connectionString, configure)` | .NET 8/9/10 | 注册单例 `OpenGaussDataSource`，由容器释放。已有 `DbDataSource` 注册优先，空缺时添加别名。 |
-| `AddKeyedOpenGaussDataSource(serviceKey, connectionString, configure)` | .NET 8/9/10 | 每个服务键拥有独立数据源和连接池。具体类型与 `DbDataSource` 按同一个键解析成同一实例。 |
+| `AddOpenGaussDataSource(connectionString, configure)` | .NET 8/9/10 | 注册单例 `OpenGaussDataSource`，由容器释放。已有 `DbDataSource` 注册优先，空缺时添加别名。`configure` 为 `(IServiceProvider, OpenGaussDataSourceBuilder)`。 |
+| `AddKeyedOpenGaussDataSource(serviceKey, connectionString, configure)` | .NET 8/9/10 | 每个服务键拥有独立数据源和连接池。具体类型与 `DbDataSource` 按同一个键解析成同一实例。`configure` 同上。 |
 
-现代 TFM 的核心库提供 `OpenGaussDataSource` 和 Builder，复用核心连接池。调用方释放从数据源创建的连接。DI 可从容器取得 `ILoggerFactory`，数据源配置回调可覆盖默认工厂。验证注册冲突、重复服务键、自动释放、关闭后的使用、跨作用域单例和日志工厂归属。同一数据源可通过具体类型和基类别名解析，释放须幂等。
+现代 TFM 的核心库提供 `OpenGaussDataSource` 和 `OpenGaussDataSourceBuilder`。数据源持有自己的 `ConnectorSource`，因此同一连接串建出的多个数据源之间不共享池，也不受进程级池管理影响；从数据源创建的连接不能再改连接串，释放连接即归还该数据源的池，释放数据源即释放池。DI 可从容器取得 `ILoggerFactory`，数据源配置回调可覆盖默认工厂；但核心日志当前是进程级静态提供程序（`OpenGaussLogManager.Provider`），改为按数据源传递需要改动日志入口，作为 M1 的后续项跟踪。验证注册冲突、重复服务键、自动释放、关闭后的使用、跨作用域单例和日志工厂归属。同一数据源可通过具体类型和基类别名解析，释放须幂等。
 
 | 资产 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `Microsoft.Extensions.Logging.Abstractions` | `Microsoft.Extensions.DependencyInjection` |
 | --- | --- | --- | --- |
@@ -71,7 +71,7 @@
 | `net9.0` | `9.0.0` | `9.0.0` | `9.0.0` |
 | `net10.0` | `10.0.0` | `10.0.0` | `10.0.0` |
 
-这些版本由根 CPM 按 TFM 定义。Standard 两组暂取 `8.0.0`，优先兼顾已有 8.x 消费端。DI 包直接引用 DI Abstractions 和实现日志接入所需的 Logging Abstractions。完整 DI 容器包用于测试和示例，核心包依赖仅在使用相应 API 时声明。发布前从本地包源消费核心与 DI 包，检查五组 `.nuspec` 依赖下限，以及最低版本和已选补丁版本的恢复与运行。 [OB 与 NuGet 元数据](references.md)
+这些版本由根 CPM 按 TFM 定义。Standard 两组暂取 `8.0.0`，优先兼顾已有 8.x 消费端。DI 包直接引用 DI Abstractions；实现日志接入时再引用 Logging Abstractions。完整 DI 容器包用于测试和示例，核心包依赖仅在使用相应 API 时声明。发布前从本地包源消费核心与 DI 包，检查五组 `.nuspec` 依赖下限，以及最低版本和已选补丁版本的恢复与运行。 [OB 与 NuGet 元数据](references.md)
 
 ## 官方 ADO.NET 扩展包
 
