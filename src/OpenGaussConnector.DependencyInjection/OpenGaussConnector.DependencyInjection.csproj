@@ -7,6 +7,7 @@
     <PackageId>OpenGaussConnector.DependencyInjection</PackageId>
     <Description>Dependency injection integration for the OpenGaussConnector ADO.NET provider.</Description>
     <PackageTags>opengauss;postgresql;ado;ado.net;dependency-injection</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -15,11 +16,8 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 
-  <!-- Depend on this provider release or newer, without pinning an exact version. -->
-  <Target Name="PinCorePackageDependency" AfterTargets="_GetProjectReferenceVersions">
-    <ItemGroup>
-      <_ProjectReferencesWithVersions Update="@(_ProjectReferencesWithVersions)" ProjectVersion="[$(Version),)" />
-    </ItemGroup>
-  </Target>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

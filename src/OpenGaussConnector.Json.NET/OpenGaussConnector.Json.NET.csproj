@@ -7,6 +7,7 @@
     <PackageId>OpenGaussConnector.Json.NET</PackageId>
     <Description>Json.NET plugin for OpenGaussConnector, allowing transparent serialization and deserialization of JSON objects directly to and from the database.</Description>
     <PackageTags>opengauss;postgresql;json;postgres;ado;ado.net;database;sql</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +16,10 @@
 
   <ItemGroup>
     <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

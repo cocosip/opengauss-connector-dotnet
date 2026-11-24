@@ -1,9 +1,14 @@
 <Project>
 
   <!--
-    Central Package Management. Versions are minimums declared per target framework;
-    project files reference packages without a Version. Framework-shipped dependencies
-    floor on the matching .NET release (design: 8.0.0 / 9.0.0 / 10.0.0).
+    Central Package Management.
+
+    Every dependency of a published package is declared as a range so consumers can move to newer
+    patch and minor releases without waiting for a new release of this provider:
+      * [x.y.z,)      framework and Microsoft.Extensions packages: a floor, open above
+      * [x.y.z,N.0.0) third-party plugins: a floor capped at the next major version
+    The .NET release lines that ship in this repository's targets are 8.0, 9.0 and 10.0; packages from
+    the 11.0 line are deliberately not used anywhere.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -11,61 +16,61 @@
 
   <!-- netstandard2.0 / 2.1 assets: BCL supplements not present in those reference sets. -->
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1' ">
-    <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-    <PackageVersion Include="System.Text.Json" Version="10.0.0" />
-    <PackageVersion Include="System.Threading.Channels" Version="10.0.0" />
-    <PackageVersion Include="System.Collections.Immutable" Version="10.0.0" />
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.0" />
+    <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="[6.1.2,)" />
+    <PackageVersion Include="System.Text.Json" Version="[10.0.0,)" />
+    <PackageVersion Include="System.Threading.Channels" Version="[10.0.0,)" />
+    <PackageVersion Include="System.Collections.Immutable" Version="[10.0.0,)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[10.0.0,)" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageVersion Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
+    <PackageVersion Include="Microsoft.Bcl.HashCode" Version="[6.0.0,)" />
   </ItemGroup>
 
-  <!-- Microsoft.Extensions dependencies: one release line per target framework. -->
+  <!-- Microsoft.Extensions dependencies: one floor per target framework, open above. -->
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1' Or '$(TargetFramework)' == 'net8.0' ">
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[8.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[8.0.0,)" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net9.0' ">
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[9.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[9.0.0,)" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.0,)" />
   </ItemGroup>
 
-  <!-- Official ADO.NET extension packages keep their upstream dependency baseline. -->
+  <!-- Official ADO.NET extension packages; newest release that keeps working on these targets. -->
   <ItemGroup>
-    <PackageVersion Include="GeoJSON.Net" Version="1.4.1" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="NetTopologySuite.IO.PostGIS" Version="2.1.0" />
-    <PackageVersion Include="NodaTime" Version="3.0.9" />
-    <PackageVersion Include="OpenTelemetry" Version="1.20.1" />
+    <PackageVersion Include="GeoJSON.Net" Version="[1.4.1,2.0.0)" />
+    <PackageVersion Include="Newtonsoft.Json" Version="[13.0.4,14.0.0)" />
+    <PackageVersion Include="NetTopologySuite.IO.PostGIS" Version="[2.1.0,3.0.0)" />
+    <PackageVersion Include="NodaTime" Version="[3.3.7,4.0.0)" />
+    <!-- 1.21.0 pulls Microsoft.Extensions.* 11.0.0; 1.20.1 is the newest release that stays on 10.x. -->
+    <PackageVersion Include="OpenTelemetry" Version="[1.20.1,2.0.0)" />
   </ItemGroup>
 
-  <!-- Build-time only: source generator and its template engine. -->
+  <!-- Build-time only: source generator and its template engine. Not part of any package. -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
     <PackageVersion Include="Scriban.Signed" Version="7.6.1" />
   </ItemGroup>
 
-  <!-- Test and benchmark tooling; never a dependency of a published package. -->
+  <!-- Test and benchmark tooling; never a dependency of a published package, so exact versions stay. -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="NUnit" Version="3.14.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageVersion Include="NLog" Version="4.7.12" />
-    <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="AdoNet.Specification.Tests" Version="2.0.0-alpha8" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.13.12" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.2" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15" />
   </ItemGroup>
 
 </Project>

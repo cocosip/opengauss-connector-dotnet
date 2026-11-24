@@ -1,64 +1,64 @@
-# openGauss ADO.NET 驱动开发进度
+# openGauss ADO.NET Driver Development Progress
 
-更新日期 2026-11-24
+Updated 2026-11-24
 
-## 当前状态
+## Current State
 
-| 事项 | 状态 | 证据或待办 |
+| Item | Status | Evidence or pending |
 | --- | --- | --- |
-| 上游调研 | 已完成本轮 | 固定 ADO.NET 与 OB 参考提交，核对 JDBC 四个发布标签及本地开发线、openGauss 发行资料和 DI 包元数据。 [参考资料](references.md) |
-| 设计、功能矩阵 | 已走查并更新 | 首发七包、五组 TFM、五个上游扩展的项目清单和功能验收、JDBC 版本差异及驱动内服务端版本选择。 [驱动设计](opengauss-connector-design.md) · [功能矩阵](opengauss-connector-feature-matrix.md) |
-| M1 开工清单 | 已补齐 | 记录上游导入、首次构建、测试入口和包消费的执行顺序。 [M1 开工清单](opengauss-connector-m1.md) |
-| 上游导入与重命名 | 已完成 | 固定 `ba5e8ba` 快照，七个产品项目与六个测试项目按新路径导入，机械重命名与 13 项显式偏离逐条记录。 [导入记录](opengauss-connector-import.md) |
-| 核心源码与源生成器 | 已完成（五目标编译通过） | `OpenGaussConnector` 五组资产构建成功、0 警告 0 错误；连接串生成器与 43 个类型处理器分部类生成正常。 |
-| 核心 DataSource/Builder 与 DI 包 | 已完成（五目标编译通过） | `OpenGaussDataSource`/`OpenGaussDataSourceBuilder` 按 .NET 8/9/10 提供并持有独立连接源；DI 包五组资产编译通过，15 项注册、生命周期与释放测试通过。 |
-| 五个上游扩展 | 已完成（五目标编译通过） | 五个包各产出五组资产、0 警告 0 错误；`tests/OpenGaussConnector.Extensions.Tests` 8 项通过（插件注册与 OpenTelemetry 订阅）。上游插件的对象级写入成员缺失已按 Npgsql 语义补入 `OpenGaussSimpleTypeHandler`。 |
-| 测试项目接入与离线测试 | 已完成 | 六个测试项目改到 `net10.0` + CPM 并接入 SLNX，全部编译通过。`eng/Test-Offline.ps1` 用固定夹具白名单跑通 190 项无需服务端的用例；需要服务端的用例由 `OPENGAUSS_TEST_DB` 驱动。 |
-| 五组资产、包消费、服务端联机 | 待开始 | 未运行打包、包消费或数据库联机测试。 |
-| 实际部署版本和升级状态 | 待确认 | 已核对 6.0.6、7.0.0 LTS 的公开资料。用户环境的版本、发行形态与升级情况待采集。 |
-| 开发机 SDK 与运行时 | 已盘点 | 检测到 10.0.403 SDK 及 .NET 8/9/10 运行时；仓库不设 `global.json`，直接使用已安装 SDK。CI 使用的精确版本待记录。 |
+| Upstream research | Done for this round | Pinned the ADO.NET and OB reference commits, checked the four JDBC release tags and the local development line, openGauss release materials and DI package metadata. [References](references.md) |
+| Design, feature matrix | Reviewed and updated | Project list and functional acceptance for the first seven packages, five TFMs and five upstream extensions; JDBC version differences and in-driver server version selection. [Driver design](opengauss-connector-design.md) · [Feature matrix](opengauss-connector-feature-matrix.md) |
+| M1 kickoff checklist | Completed | Records the execution order for upstream import, first build, test entry points and package consumption. [M1 kickoff checklist](opengauss-connector-m1.md) |
+| Upstream import and rename | Done | Pinned the `ba5e8ba` snapshot; seven product projects and six test projects imported under new paths; mechanical renames and 13 explicit deviations recorded item by item. [Import record](opengauss-connector-import.md) |
+| Core source and source generators | Done (five targets compile) | The five assets of `OpenGaussConnector` build successfully, 0 warnings 0 errors; the connection string generator and 43 type handler partial classes generate normally. |
+| Core DataSource/Builder and DI package | Done (five targets compile) | `OpenGaussDataSource`/`OpenGaussDataSourceBuilder` provided per .NET 8/9/10 and holding an independent connection source; the DI package compiles for the five assets, 15 registration, lifetime and disposal tests pass. |
+| Five upstream extensions | Done (five targets compile) | Each of the five packages produces five assets, 0 warnings 0 errors; `tests/OpenGaussConnector.Extensions.Tests` 8 pass (plugin registration and OpenTelemetry subscription). The upstream plugins' missing object-level write members were added to `OpenGaussSimpleTypeHandler` following Npgsql semantics. |
+| Test project integration and offline tests | Done | Six test projects moved to `net10.0` + CPM and wired into the SLNX, all compile. `eng/Test-Offline.ps1` runs 190 cases that need no server with a fixed fixture whitelist; cases that need a server are driven by `OPENGAUSS_TEST_DB`. |
+| Five assets and package consumption | Done | `dotnet pack` produces the seven packages and their symbol packages for `0.1.0`. `eng/Verify-Packages.ps1` inspects each one (five `lib/<TFM>/` assets with XML docs, license, icon, README, dependency ranges, symbol files), then restores, builds and runs throwaway consumers from the produced folder: `netstandard2.0` and `netstandard2.1` libraries compile against the standard assets, and `net8.0`/`net9.0`/`net10.0` console programs exercise the factory, connection string builder, data source, DI registrations, the four type-mapping plugins and the OpenTelemetry subscription. |
+| Actual deployment version and upgrade status | To confirm | Checked public materials for 6.0.6 and 7.0.0 LTS. The user environment's version, release form and upgrade situation are to be collected. |
+| Development machine SDK and runtime | Inventoried | Detected 10.0.403 SDK and .NET 8/9/10 runtimes; the repository sets no `global.json` and uses the installed SDK directly. The exact versions used by CI are to be recorded. |
 
-## 里程碑
+## Milestones
 
-| 阶段 | 状态 | 工作与退出条件 |
+| Stage | Status | Work and exit criteria |
 | --- | --- | --- |
-| M0 · 建立设计基线 | 本轮完成 | 记录上游快照、版本化资料、范围与能力验收规则。 |
-| M1 · 核心、DI 与五个上游扩展移植 | 进行中 | 核心、生成器、DataSource、DI、五个扩展包与测试项目接入已完成。剩余 B07/B09 打包与独立消费验证。 [M1 开工清单](opengauss-connector-m1.md) |
-| M2 · 6.0.6 LTS 核心联机 | 待开始 | 验证 C01、C02、C05、C07、C08、C13 和 E01–E03、E10、T01–T03、T06、T07 的 P0 项。按 A、B、PG 记录结果。在一个已验证模式补齐五组资产联机冒烟，并通过 DI 路径创建连接。 |
-| M3 · 7.0.0 LTS 与跨版本回归 | 待开始 | 重复 M2 核心用例与五组资产冒烟，完成 X01–X05 支持环境的逐包功能验收。核对目录、兼容模式、扩展与类型差异。测试版本冲突、版本未知、混合节点及升级后的物理连接重建。 |
-| M4 · 优先功能与预发行 | 待开始 | 按测试结果推进混合认证、SM3、主备、批量、COPY、过程、扩展元数据等 P1 项。校验七个包的消费报告及对应的环境能力，记录已知限制与跳过原因。 |
-| M5 · 专项增强 | 待评估 | 分别跟踪 oGRAC、ATF、TLCP、全密态和复制输出插件。 |
+| M0 · Establish design baseline | Done this round | Record upstream snapshot, versioned materials, scope and capability acceptance rules. |
+| M1 · Core, DI and five upstream extension ports | Done | Core, generator, DataSource, DI, the five extension packages, test project integration, packing and independent consumption verification are done: seven packages, five assets each, consumers on all five TFM sets. [M1 kickoff checklist](opengauss-connector-m1.md) |
+| M2 · 6.0.6 LTS core live runs | Not started | Verify P0 items C01, C02, C05, C07, C08, C13 and E01–E03, E10, T01–T03, T06, T07. Record results per A, B, PG. Complete the five-asset live smoke test in one verified mode, and create a connection through the DI path. |
+| M3 · 7.0.0 LTS and cross-version regression | Not started | Repeat the M2 core cases and the five-asset smoke test, complete per-package functional acceptance for the X01–X05 supported environments. Check catalog, compatibility mode, extension and type differences. Test version conflicts, unknown versions, mixed nodes and physical connection rebuild after upgrade. |
+| M4 · Priority features and pre-release | Not started | Advance P1 items such as mixed authentication, SM3, primary/standby, batching, COPY, procedures and extension metadata per test results. Validate the consumption reports of the seven packages and the corresponding environment capabilities, and record known limitations and skip reasons. |
+| M5 · Specialized enhancements | To assess | Track the oGRAC, ATF, TLCP, fully encrypted and replication output plugins separately. |
 
-## M1 分阶段交付记录
+## M1 Staged Delivery Record
 
-每个阶段完成后按"构建 → 测试 → 走查 → 更新本文件 → 提交"闭合。阶段顺序对应 [M1 开工清单](opengauss-connector-m1.md) 的步骤 1–5。
+Each stage closes with "build → test → review → update this file → commit". The stage order corresponds to steps 1–5 of the [M1 kickoff checklist](opengauss-connector-m1.md).
 
-| 阶段 | 范围 | 状态 | 证据 |
+| Stage | Scope | Status | Evidence |
 | --- | --- | --- | --- |
-| A | 仓库骨架（`slnx`、CPM、构建属性）与上游核心导入 | 已完成 | 465 个导入文件；`dotnet build OpenGaussConnector.slnx -c Release` 成功，五份资产 0 警告 0 错误；生成器产物已核对；离线冒烟通过。 [导入记录](opengauss-connector-import.md) |
-| B | 核心 DataSource/Builder 与 `OpenGaussConnector.DependencyInjection` | 已完成 | 五组资产 0 警告 0 错误；`tests/OpenGaussConnector.DependencyInjection.Tests` 15 项通过（瞬态连接、别名优先、重复注册、单例释放、键控隔离、数据源连接串固定）。日志工厂接入按[驱动设计](opengauss-connector-design.md)记为 M1 后续项。 |
-| C | `OpenGaussConnector.Json.NET` | 已完成 | 五组资产 0 警告 0 错误；`UseJsonNet` 注册 `JsonNetTypeHandlerResolverFactory`，测试覆盖。依赖升到不违背 10.x 上限的 `Newtonsoft.Json 13.0.3`。 |
-| D | `OpenGaussConnector.NodaTime` | 已完成 | 五组资产 0 警告 0 错误；`UseNodaTime` 注册 `NodaTimeTypeHandlerResolverFactory`。上游 `net6.0` 目标改为五组 TFM。 |
-| E | `OpenGaussConnector.NetTopologySuite` | 已完成 | 五组资产 0 警告 0 错误；`UseNetTopologySuite` 注册 `NetTopologySuiteTypeHandlerResolverFactory`；补入对象级写入成员。 |
-| F | `OpenGaussConnector.GeoJSON` | 已完成 | 五组资产 0 警告 0 错误；`UseGeoJson` 注册 `GeoJSONTypeHandlerResolverFactory`；补入对象级写入成员。`GeoJSON.Net` 升到 1.4.1 以摆脱有漏洞的传递依赖。 |
-| G | `OpenGaussConnector.OpenTelemetry` | 已完成 | 五组资产 0 警告 0 错误；`AddOpenGauss` 订阅 `OpenGauss` source，用捕获处理器验证只有该 source 的 activity 被采集。依赖改为 `OpenTelemetry 1.20.1`。 |
-| H | 上游测试项目接入与离线测试入口 | 已完成 | 六个测试项目编译通过（`net10.0`、CPM、项目引用修正）；新增 `eng/Test-Offline.ps1`：DI 15 项、扩展 8 项、上游离线夹具 167 项，共 190 项通过。测试连接串改用 `OPENGAUSS_TEST_DB`，`NPGSQL_TEST_DB` 保留回退。 |
-| I | 打包、`eng/Verify-Packages.ps1` 与独立消费验证 | 待开始 | — |
+| A | Repository skeleton (`slnx`, CPM, build properties) and upstream core import | Done | 465 imported files; `dotnet build OpenGaussConnector.slnx -c Release` succeeds, the five assets 0 warnings 0 errors; generator output checked; offline smoke test passes. [Import record](opengauss-connector-import.md) |
+| B | Core DataSource/Builder and `OpenGaussConnector.DependencyInjection` | Done | Five assets 0 warnings 0 errors; `tests/OpenGaussConnector.DependencyInjection.Tests` 15 pass (transient connection, alias precedence, duplicate registration, singleton disposal, keyed isolation, data source connection string fixed). Logging factory integration is recorded as a follow-up M1 item per the [driver design](opengauss-connector-design.md). |
+| C | `OpenGaussConnector.Json.NET` | Done | Five assets 0 warnings 0 errors; `UseJsonNet` registers `JsonNetTypeHandlerResolverFactory`, covered by tests. Dependency declared as the range `Newtonsoft.Json [13.0.4,14.0.0)`. |
+| D | `OpenGaussConnector.NodaTime` | Done | Five assets 0 warnings 0 errors; `UseNodaTime` registers `NodaTimeTypeHandlerResolverFactory`, dependency range `NodaTime [3.3.7,4.0.0)`. The upstream `net6.0` target changed to the five TFMs. |
+| E | `OpenGaussConnector.NetTopologySuite` | Done | Five assets 0 warnings 0 errors; `UseNetTopologySuite` registers `NetTopologySuiteTypeHandlerResolverFactory`; object-level write members added. |
+| F | `OpenGaussConnector.GeoJSON` | Done | Five assets 0 warnings 0 errors; `UseGeoJson` registers `GeoJSONTypeHandlerResolverFactory`; object-level write members added. Dependency range `GeoJSON.Net [1.4.1,2.0.0)`, raised from 1.2.19 to shed a vulnerable transitive dependency. |
+| G | `OpenGaussConnector.OpenTelemetry` | Done | Five assets 0 warnings 0 errors; `AddOpenGauss` subscribes to the `OpenGauss` source, and a capturing processor verifies that only that source's activities are collected. Dependency range `OpenTelemetry [1.20.1,2.0.0)`; 1.21.0 pulls `Microsoft.Extensions.*` 11.0.0, which this repository does not target. |
+| H | Upstream test project integration and offline test entry point | Done | Six test projects compile (`net10.0`, CPM, project reference fixes); new `eng/Test-Offline.ps1`: DI 15, extensions 8, upstream offline fixture 167, 190 total pass. The test connection string now uses `OPENGAUSS_TEST_DB`, with `NPGSQL_TEST_DB` kept as fallback. |
+| I | Packing, `eng/Verify-Packages.ps1` and independent consumption verification | Done | Seven `.nupkg` plus seven `.snupkg` at `0.1.0`, 0 warnings 0 errors. Each package inspected for five `lib/<TFM>/` assemblies and XML docs, license, icon, README, symbol files and dependency ranges; `netstandard2.0`/`netstandard2.1` consumers resolve their own asset, and `net8.0`/`net9.0`/`net10.0` programs load all seven assemblies at `0.1.0.0` from the application directory and exercise core, data source, DI, the four type-mapping plugins and tracing. Three packages gained a README, and every packaged dependency is now a NuGet range. |
 
-### 联机执行顺序
+### Order for live-server runs
 
-1. 准备 6.0.6 与 7.0.0 的单节点环境，记录发行形态、构建号、可建立的数据库模式、测试账号权限与认证配置。
-2. 对两版服务先做启动、SHA256、基本 SQL 与事务冒烟。记录驱动识别的产品版本、启动参数和实际兼容模式，再扩展到参数、类型、版本相关目录、池、取消和 TLS。
-3. 建立兼容模式和功能用例的对照表。对失败项用固定版 JDBC、旧 ADO.NET 或服务端 SQL 复现，视场景选择对照。
-4. 建立 6.0.6/7.0.0 主备和 TLS 专项所需环境，按实际部署条件安排。推进内容见 [功能矩阵](opengauss-connector-feature-matrix.md)。
-5. 在两套环境中核对 PostGIS 和扩展类型可用性，记录实际扩展版本。运行适用的 GIS、Json.NET、NodaTime 和 OpenTelemetry 端到端测试，并记录消费的包和资产。
+1. Prepare single-node environments for 6.0.6 and 7.0.0, and record the release form, build number, database modes that can be created, test account privileges and authentication configuration.
+2. For both server versions first do startup, SHA256, basic SQL and transaction smoke tests. Record the product version, startup parameters and actual compatibility mode identified by the driver, then extend to parameters, types, version-related catalog, pool, cancellation and TLS.
+3. Establish a mapping table between compatibility modes and feature cases. For failing items, reproduce with the fixed-version JDBC, legacy ADO.NET or server-side SQL, choosing the comparison per scenario.
+4. Establish the environments needed for the 6.0.6/7.0.0 primary/standby and TLS specialty items, arranged per actual deployment conditions. For what to advance, see the [feature matrix](opengauss-connector-feature-matrix.md).
+5. In both environments check PostGIS and extension type availability, and record the actual extension versions. Run the applicable GIS, Json.NET, NodaTime and OpenTelemetry end-to-end tests, and record the packages and assets consumed.
 
-## 验收记录
+## Acceptance Log
 
-每次验证按功能与目标组合记一行。驱动版本识别用例单独记录显式配置、探测值、能力可用性和采用的兼容路径。环境缺失时记录具体缺项。用例执行后标注结果和复现位置，涉及凭据的输出先脱敏。
+Record one row per verification, by feature and target combination. Record driver version identification cases separately with explicit configuration, probed values, capability availability and the compatibility path taken. Record specific gaps when the environment is missing. After a case runs, annotate the result and reproduction location; redact outputs that involve credentials.
 
-离线结果记入上面的分阶段交付记录；下表只记需要真实服务端的用例。
+Offline results go into the staged delivery record above; the table below records only cases that need a real server.
 
-| 日期 | 功能 ID | 驱动提交或包版本 | 服务端与构建号 | 数据库模式及扩展 | OS / 宿主 / 资产 TFM | 认证 / TLS / 拓扑 | 结果 | 日志或用例路径 |
+| Date | Feature ID | Driver commit or package version | Server and build number | Database mode and extensions | OS / host / asset TFM | Auth / TLS / topology | Result | Log or case path |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 待执行 | C01、C02 | 待建立 | 6.0.6 LTS，构建号待记录 | A，扩展待记录 | Windows 或 Linux / .NET 10 / `net10.0` | SHA256 / 待记录 / 单节点 | 待执行 | 待记录 |
+| To run | C01, C02 | To establish | 6.0.6 LTS, build number to record | A, extensions to record | Windows or Linux / .NET 10 / `net10.0` | SHA256 / to record / single node | To run | To record |

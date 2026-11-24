@@ -22,7 +22,7 @@
     <Copyright>Copyright 2026 © The OpenGaussConnector Development Team</Copyright>
     <Company>OpenGaussConnector</Company>
     <Authors>The OpenGaussConnector Development Team</Authors>
-    <PackageLicenseExpression>MulanPSL2</PackageLicenseExpression>
+    <PackageLicenseExpression>MulanPSL-2.0</PackageLicenseExpression>
     <PackageIcon>openGauss.png</PackageIcon>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>

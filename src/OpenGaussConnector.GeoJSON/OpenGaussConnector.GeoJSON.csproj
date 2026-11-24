@@ -7,6 +7,7 @@
     <PackageId>OpenGaussConnector.GeoJSON</PackageId>
     <Description>GeoJSON plugin for OpenGaussConnector, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
     <PackageTags>opengauss;postgresql;postgis;geojson;spatial;ado;ado.net</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +16,10 @@
 
   <ItemGroup>
     <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
