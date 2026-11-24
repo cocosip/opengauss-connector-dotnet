@@ -77,13 +77,13 @@
 
 上游目标与依赖版本来自固定快照的项目文件，作为移植起点。下表的新包 ID 同时作为项目及程序集名称。五个扩展与核心、DI 使用相同的五个目标框架。第三方库按各自的资产与 API 选定 CPM 版本，验证后记录精确解析结果。上游扩展方法统一从 `OpenGauss.NET` 暴露，迁移后保留方法名，应用改用 `OpenGaussConnector` 导入这些方法。 [上游项目清单](references.md)
 
-| 上游项目 | 新包 ID | 上游目标与直接依赖 | 保留的注册入口和能力 |
+| 上游项目 | 新包 ID | 目标框架与直接依赖（移植后） | 保留的注册入口和能力 |
 | --- | --- | --- | --- |
-| `OpenGauss.GeoJSON.NET` | `OpenGaussConnector.GeoJSON` | `netstandard2.0`，`GeoJSON.Net 1.2.19` | `UseGeoJson`，将 PostGIS `geometry`、`geography` 的 EWKB 值与 GeoJSON 对象互转，保留默认类型、包围盒和旧 CRS 选项 |
-| `OpenGauss.Json.NET` | `OpenGaussConnector.Json.NET` | `netstandard2.0`，`Newtonsoft.Json 13.0.1` | `UseJsonNet`，支持 `json`、`jsonb`、CLR 类型注册和 `JsonSerializerSettings` |
-| `OpenGauss.NetTopologySuite` | `OpenGaussConnector.NetTopologySuite` | `netstandard2.0`，`NetTopologySuite.IO.PostGIS 2.1.0` | `UseNetTopologySuite`，映射 `geometry`、`geography` 与 NTS 类型，保留精度模型、坐标序列、维度和默认类型配置 |
-| `OpenGauss.NodaTime.NET` | `OpenGaussConnector.NodaTime` | `netstandard2.0`、`net6.0`，`NodaTime 3.0.9` | `UseNodaTime`，移植日期、时间、时间戳、间隔与有服务端证据的范围类型 |
-| `OpenGauss.OpenTelemetry.NET` | `OpenGaussConnector.OpenTelemetry` | `netstandard2.0`，`OpenTelemetry.API 1.1.0` | `AddOpenGauss`，订阅核心 `ActivitySource` 并验证命令跟踪 |
+| `OpenGauss.GeoJSON.NET` | `OpenGaussConnector.GeoJSON` | 五组 TFM，`GeoJSON.Net 1.4.1`（上游 1.2.19 依赖有漏洞的 `Newtonsoft.Json 10.0.2`） | `UseGeoJson`，将 PostGIS `geometry`、`geography` 的 EWKB 值与 GeoJSON 对象互转，保留默认类型、包围盒和旧 CRS 选项 |
+| `OpenGauss.Json.NET` | `OpenGaussConnector.Json.NET` | 五组 TFM，`Newtonsoft.Json 13.0.3` | `UseJsonNet`，支持 `json`、`jsonb`、CLR 类型注册和 `JsonSerializerSettings` |
+| `OpenGauss.NetTopologySuite` | `OpenGaussConnector.NetTopologySuite` | 五组 TFM，`NetTopologySuite.IO.PostGIS 2.1.0` | `UseNetTopologySuite`，映射 `geometry`、`geography` 与 NTS 类型，保留精度模型、坐标序列、维度和默认类型配置 |
+| `OpenGauss.NodaTime.NET` | `OpenGaussConnector.NodaTime` | 五组 TFM，`NodaTime 3.0.9` | `UseNodaTime`，移植日期、时间、时间戳、间隔与有服务端证据的范围类型 |
+| `OpenGauss.OpenTelemetry.NET` | `OpenGaussConnector.OpenTelemetry` | 五组 TFM，`OpenTelemetry 1.20.1`（上游引用的 `OpenTelemetry.API 1.1.0` 既不含 `TracerProviderBuilder`，也受 CVE-2026-40894 影响；1.20.1 的传递依赖仍停在 10.x） | `AddOpenGauss`，订阅核心 `ActivitySource` 并验证命令跟踪 |
 
 - **映射隔离**。保留上游类型映射扩展方法，现代 DataSource Builder 提供同一映射入口，供 DI 回调配置。按数据源或连接隔离映射设置，分别验证 GeoJSON/NTS 和内置 JSON/Json.NET 的解析优先级。两个 GIS 包检查服务端扩展、类型 OID、SRID、坐标维度与实际 EWKB。6.0.0 的 PostGIS 文档列出 `geometry` 和 `geography`，7.0.0 扩展说明列出 PostGIS 2.4.2。联机时记录实际安装版本，并验证扩展缺失时的行为。保留 `ShortCRS` 和 `LongCRS` 兼容选项，说明驱动映射保留源坐标，验证对外标为 RFC 7946 的 GeoJSON 使用 WGS 84 经纬度。 [OG11、EXT1、EXT2](references.md)
 - **Json.NET 与 NodaTime**。Json.NET 验证 POCO、JSON token、NULL、文本与二进制以及自定义设置。默认避免从数据启用多态类型解析，客户显式启用该模式时按 Json.NET 指南处理类型限制。NodaTime 验证当前及旧时间语义、时区和无穷值，含月或年的间隔使用 `Period` 路径，固定时长使用 `Duration`。范围和多范围读取取决于各环境的类型能力。 [EXT3、EXT4](references.md)

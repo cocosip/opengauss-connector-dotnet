@@ -1,26 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Description></Description>
-    <PackageTags>opengauss;postgis;spatial;nettopologysuite;nts;</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <NoWarn>$(NoWarn);NU5104</NoWarn>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>OpenGaussConnector</RootNamespace>
+    <AssemblyName>OpenGaussConnector.NetTopologySuite</AssemblyName>
+    <PackageId>OpenGaussConnector.NetTopologySuite</PackageId>
+    <Description>NetTopologySuite plugin for OpenGaussConnector, allowing mapping of PostGIS geometry types to NetTopologySuite types.</Description>
+    <PackageTags>opengauss;postgis;spatial;nettopologysuite;nts;ado;ado.net</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NetTopologySuite.IO.PostGIS" Version="2.1.0"/>
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Version="3.3.3"/>
+    <PackageReference Include="NetTopologySuite.IO.PostGIS" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
-    <ProjectReference Include="../OpenGaussConnector.SourceGenerators/OpenGaussConnector.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\"/>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

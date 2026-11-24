@@ -1,3 +1,0 @@
-#nullable enable
-OpenGaussConnector.OpenGaussNetTopologySuiteExtensions
-static OpenGaussConnector.OpenGaussNetTopologySuiteExtensions.UseNetTopologySuite(this OpenGaussConnector.TypeMapping.IOpenGaussTypeMapper! mapper, NetTopologySuite.Geometries.CoordinateSequenceFactory? coordinateSequenceFactory = null, NetTopologySuite.Geometries.PrecisionModel? precisionModel = null, NetTopologySuite.Geometries.Ordinates handleOrdinates = NetTopologySuite.Geometries.Ordinates.None, bool geographyAsDefault = false) -> OpenGaussConnector.TypeMapping.IOpenGaussTypeMapper!

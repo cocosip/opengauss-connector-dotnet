@@ -1,3 +1,0 @@
-#nullable enable
-OpenGaussConnector.OpenGaussJsonNetExtensions
-static OpenGaussConnector.OpenGaussJsonNetExtensions.UseJsonNet(this OpenGaussConnector.TypeMapping.IOpenGaussTypeMapper! mapper, System.Type![]? jsonbClrTypes = null, System.Type![]? jsonClrTypes = null, Newtonsoft.Json.JsonSerializerSettings? settings = null) -> OpenGaussConnector.TypeMapping.IOpenGaussTypeMapper!

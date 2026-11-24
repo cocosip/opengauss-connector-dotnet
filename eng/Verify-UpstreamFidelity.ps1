@@ -110,6 +110,11 @@ $expected = @(
     'tests/OpenGaussConnector.TrimmingTests/Program.cs'
     # M1-B: data source support adds an internal constructor and a fixed connection string.
     'src/OpenGaussConnector/OpenGaussConnection.cs'
+    # M1-C..G: the snapshot's plugin handlers predate the object-level handler API, so they gained
+    # ValidateObjectAndGetLength/WriteObjectWithLength; the simple handler base provides them once.
+    'src/OpenGaussConnector/Internal/TypeHandling/OpenGaussSimpleTypeHandler.cs'
+    'src/OpenGaussConnector.GeoJSON/Internal/GeoJSONHandler.cs'
+    'src/OpenGaussConnector.NetTopologySuite/Internal/NetTopologySuiteHandler.cs'
 )
 
 # Upstream files with no counterpart: renamed connector files and the dropped NodaTime assembly info.

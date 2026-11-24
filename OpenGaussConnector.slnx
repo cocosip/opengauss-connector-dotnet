@@ -1,10 +1,16 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/OpenGaussConnector.DependencyInjection/OpenGaussConnector.DependencyInjection.csproj" />
+    <Project Path="src/OpenGaussConnector.GeoJSON/OpenGaussConnector.GeoJSON.csproj" />
+    <Project Path="src/OpenGaussConnector.Json.NET/OpenGaussConnector.Json.NET.csproj" />
+    <Project Path="src/OpenGaussConnector.NetTopologySuite/OpenGaussConnector.NetTopologySuite.csproj" />
+    <Project Path="src/OpenGaussConnector.NodaTime/OpenGaussConnector.NodaTime.csproj" />
+    <Project Path="src/OpenGaussConnector.OpenTelemetry/OpenGaussConnector.OpenTelemetry.csproj" />
     <Project Path="src/OpenGaussConnector.SourceGenerators/OpenGaussConnector.SourceGenerators.csproj" />
     <Project Path="src/OpenGaussConnector/OpenGaussConnector.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/OpenGaussConnector.DependencyInjection.Tests/OpenGaussConnector.DependencyInjection.Tests.csproj" />
+    <Project Path="tests/OpenGaussConnector.Extensions.Tests/OpenGaussConnector.Extensions.Tests.csproj" />
   </Folder>
 </Solution>

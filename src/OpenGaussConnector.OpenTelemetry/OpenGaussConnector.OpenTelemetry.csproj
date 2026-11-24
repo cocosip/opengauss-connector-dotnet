@@ -1,20 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <PackageTags>opengauss;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>OpenGaussConnector</RootNamespace>
+    <AssemblyName>OpenGaussConnector.OpenTelemetry</AssemblyName>
+    <PackageId>OpenGaussConnector.OpenTelemetry</PackageId>
+    <Description>OpenTelemetry tracing plugin for OpenGaussConnector.</Description>
+    <PackageTags>opengauss;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>
+    <!--
+      OpenTelemetry is pinned above the snapshot's 1.1.0 for two reasons: that version is affected by
+      CVE-2026-40894 (OpenTelemetry.Api), and it does not contain TracerProviderBuilder at all.
+      1.20.1 is the newest 1.x whose transitive Microsoft.Extensions.* dependencies stay on 10.x, which
+      keeps this package off the 11.x line.
+    -->
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\OpenGaussConnector\OpenGaussConnector.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="OpenTelemetry.API" Version="1.1.0"/>
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
-    </ItemGroup>
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

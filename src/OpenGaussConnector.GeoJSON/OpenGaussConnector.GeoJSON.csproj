@@ -1,20 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<Description>GeoJSON plugin for OpenGauss, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
-		<PackageTags></PackageTags>
-		<TargetFramework>netstandard2.0</TargetFramework>
-	</PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="GeoJSON.Net" Version="1.2.19"/>
-	</ItemGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>OpenGaussConnector</RootNamespace>
+    <AssemblyName>OpenGaussConnector.GeoJSON</AssemblyName>
+    <PackageId>OpenGaussConnector.GeoJSON</PackageId>
+    <Description>GeoJSON plugin for OpenGaussConnector, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
+    <PackageTags>opengauss;postgresql;postgis;geojson;spatial;ado;ado.net</PackageTags>
+  </PropertyGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-		<PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" Version="3.3.3" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="GeoJSON.Net" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
-		<ProjectReference Include="../OpenGaussConnector.SourceGenerators/OpenGaussConnector.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
+  </ItemGroup>
+
 </Project>

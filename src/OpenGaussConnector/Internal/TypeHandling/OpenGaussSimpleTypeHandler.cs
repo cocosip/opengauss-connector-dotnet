@@ -75,5 +75,34 @@ namespace OpenGaussConnector.Internal.TypeHandling
             => throw new NotSupportedException();
 
         #endregion
+
+        #region Object-level write (called with the CLR value boxed as object)
+
+        /// <summary>
+        /// Validates a value whose static type is <see cref="object"/> and returns its byte length. Simple
+        /// handlers only accept <typeparamref name="TDefault"/> here; types reached through
+        /// <see cref="IOpenGaussSimpleTypeHandler{T}"/> are handled by their own handler instance.
+        /// </summary>
+        public override int ValidateObjectAndGetLength(object value, ref OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter)
+            => value is TDefault converted
+                ? ValidateAndGetLength(converted, parameter)
+                : throw new InvalidCastException($"Can't write CLR type {value.GetType().Name} with handler type {GetType().Name}");
+
+        /// <summary>
+        /// Writes a value whose static type is <see cref="object"/>. Simple handlers write without any I/O,
+        /// so the length cache and the async flag are unused.
+        /// </summary>
+        public override Task WriteObjectWithLength(
+            object? value, OpenGaussWriteBuffer buf, OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter,
+            bool async, CancellationToken cancellationToken = default)
+        {
+            if (value is not TDefault converted)
+                throw new InvalidCastException($"Can't write CLR type {value?.GetType().Name ?? "null"} with handler type {GetType().Name}");
+
+            Write(converted, buf, parameter);
+            return Task.CompletedTask;
+        }
+
+        #endregion
     }
 }

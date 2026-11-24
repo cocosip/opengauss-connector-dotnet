@@ -66,6 +66,18 @@ namespace OpenGaussConnector.NetTopologySuite.Internal
 
         #region ValidateAndGetLength
 
+        public override int ValidateObjectAndGetLength(object value, ref OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter)
+            => value is Geometry geometry
+                ? ValidateAndGetLength(geometry, ref lengthCache, parameter)
+                : throw new InvalidCastException($"Cannot write {value.GetType().Name} as a NetTopologySuite geometry");
+
+        public override Task WriteObjectWithLength(
+            object? value, OpenGaussWriteBuffer buf, OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter,
+            bool async, CancellationToken cancellationToken = default)
+            => value is Geometry geometry
+                ? Write(geometry, buf, lengthCache, parameter, async, cancellationToken)
+                : throw new InvalidCastException($"Cannot write {value?.GetType().Name ?? "null"} as a NetTopologySuite geometry");
+
         public override int ValidateAndGetLength(Geometry value, ref OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter)
             => ValidateAndGetLengthCore(value);
 

@@ -280,6 +280,18 @@ namespace OpenGaussConnector.GeoJSON.Internal
 
         #region Write
 
+        public override int ValidateObjectAndGetLength(object value, ref OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter)
+            => value is GeoJSONObject geometryObject
+                ? ValidateAndGetLength(geometryObject, ref lengthCache, parameter)
+                : throw new InvalidCastException($"Cannot write {value.GetType().Name} as a GeoJSON geometry");
+
+        public override Task WriteObjectWithLength(
+            object? value, OpenGaussWriteBuffer buf, OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter,
+            bool async, CancellationToken cancellationToken = default)
+            => value is GeoJSONObject geometryObject
+                ? Write(geometryObject, buf, lengthCache, parameter, async, cancellationToken)
+                : throw new InvalidCastException($"Cannot write {value?.GetType().Name ?? "null"} as a GeoJSON geometry");
+
         public override int ValidateAndGetLength(GeoJSONObject value, ref OpenGaussLengthCache? lengthCache, OpenGaussParameter? parameter)
             => value.Type switch
             {
