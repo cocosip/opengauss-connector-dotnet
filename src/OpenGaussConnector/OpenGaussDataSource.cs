@@ -79,23 +79,20 @@ namespace OpenGaussConnector
             }
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Not supported: a command executes on a connection, and the ported command needs a connection to
+        /// obtain one from this data source's pool. Create a connection first.
+        /// </summary>
         protected override DbCommand CreateDbCommand(string? cmdText)
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            => throw new NotSupportedException(
+                "Create a connection from this data source and use its CreateCommand; a data source cannot own a command.");
 
-            var command = new OpenGaussCommand();
-            if (!string.IsNullOrEmpty(cmdText))
-                command.CommandText = cmdText;
-            return command;
-        }
-
-        /// <inheritdoc />
+        /// <summary>
+        /// Not supported: see <see cref="CreateDbCommand"/>.
+        /// </summary>
         protected override DbBatch CreateDbBatch()
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-            return new OpenGaussBatch();
-        }
+            => throw new NotSupportedException(
+                "Create a connection from this data source and use its CreateBatch; a data source cannot own a batch.");
 
         /// <inheritdoc />
         protected override void Dispose(bool disposing)

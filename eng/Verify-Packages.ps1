@@ -131,7 +131,17 @@ try {
         Write-Host '==> consume' -ForegroundColor Cyan
         $feed = $PackagesDirectory
         # An isolated package cache proves the consumers resolve this run's packages, not a cached copy.
+        # One nuget.config at the work root is inherited by every consumer project below it.
         $cache = Join-Path $work 'packages'
+        @"
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="local" value="$feed" />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+"@ | Set-Content (Join-Path $work 'nuget.config')
 
         function Get-AssetPath([string] $projectDirectory, [string] $packageId) {
             $assets = Get-Content (Join-Path $projectDirectory 'obj/project.assets.json') -Raw | ConvertFrom-Json
@@ -173,15 +183,7 @@ namespace Consume
     }
 }
 '@ | Set-Content (Join-Path $project 'Probe.cs')
-            @"
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="local" value="$feed" />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </packageSources>
-</configuration>
-"@ | Set-Content (Join-Path $project 'nuget.config')
+
             & dotnet restore (Join-Path $project 'consume.csproj') --nologo --packages $cache
             if ($LASTEXITCODE -ne 0) { Fail "${tfm}: consumer restore failed"; continue }
             $asset = Get-AssetPath $project 'OpenGaussConnector'
@@ -240,9 +242,18 @@ using var dataSource = new OpenGaussDataSourceBuilder(connectionString).Build();
 using var fromDataSource = dataSource.CreateConnection();
 if (fromDataSource.ConnectionString.Contains("secret"))
     throw new Exception("data source connection string must not expose the password");
-using var command = dataSource.CreateCommand("SELECT 1");
-if (command.CommandText != "SELECT 1")
-    throw new Exception("data source did not create the command");
+using var dataSourceConnection = (OpenGaussConnection)dataSource.CreateConnection();
+if (dataSourceConnection.ConnectionString.Contains("secret"))
+    throw new Exception("connection string of a data source connection must not expose the password");
+using (var command = new OpenGaussCommand("SELECT 1", dataSourceConnection))
+    if (command.CommandText != "SELECT 1")
+        throw new Exception("connection did not accept the command text");
+try
+{
+    dataSource.CreateCommand("SELECT 1");
+    throw new Exception("a data source must refuse to own a command");
+}
+catch (NotSupportedException) { }
 
 // Dependency injection
 using var provider = new ServiceCollection()
@@ -284,15 +295,7 @@ Console.WriteLine($"consumer ok ({targetFramework}): " + string.Join(", ",
     new[] { "core", "data source", "di", "extensions", "tracing" }) + " · " + string.Join(", ", providerAssemblies.Select(a => a.GetName().Name)));
 '@
             Set-Content (Join-Path $project 'Program.cs') $program
-            @"
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="local" value="$feed" />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </packageSources>
-</configuration>
-"@ | Set-Content (Join-Path $project 'nuget.config')
+
             & dotnet restore (Join-Path $project 'consume.csproj') --nologo --packages $cache
             if ($LASTEXITCODE -ne 0) { Fail "${tfm}: consumer restore failed"; continue }
             foreach ($id in $packages) {
@@ -304,6 +307,169 @@ Console.WriteLine($"consumer ok ({targetFramework}): " + string.Join(", ",
             & dotnet (Join-Path $project "bin/$Configuration/$tfm/consume.dll") $tfm
             if ($LASTEXITCODE -ne 0) { Fail "${tfm}: consumer run failed"; continue }
             Write-Host "  ok: $tfm"
+        }
+
+        # A class library compiled against the netstandard2.0 asset must still bind on a modern host for the
+        # APIs that do not involve the DbBatch shim; batch calls from such a library are the recorded
+        # limitation described in docs/opengauss-connector-m1.md.
+        $library = Join-Path $work 'standard-library'
+        New-Item -ItemType Directory -Force -Path $library | Out-Null
+        @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenGaussConnector" Version="$version" />
+  </ItemGroup>
+</Project>
+"@ | Set-Content (Join-Path $library 'standard-library.csproj')
+        @'
+using OpenGaussConnector;
+
+namespace StandardLibrary
+{
+    public static class Probe
+    {
+        // Called from the modern host: no DbBatch shim type appears in this signature.
+        public static string Describe(string connectionString)
+        {
+            var builder = new OpenGaussConnectionStringBuilder(connectionString);
+            using (var connection = new OpenGaussConnection(builder.ConnectionString))
+                return connection.State + ":" + builder.Database;
+        }
+
+        // Compiles against the netstandard asset, where batch types come from the provider's shim.
+        // Not called from a modern host: see the migration note in docs/opengauss-connector-m1.md.
+        public static int CountBatchCommands(string connectionString)
+        {
+            using (var connection = new OpenGaussConnection(connectionString))
+            using (var batch = connection.CreateBatch())
+            {
+                batch.BatchCommands.Add(new OpenGaussBatchCommand("SELECT 1"));
+                batch.BatchCommands.Add(new OpenGaussBatchCommand("SELECT 2"));
+                return batch.BatchCommands.Count;
+            }
+        }
+    }
+}
+'@ | Set-Content (Join-Path $library 'Probe.cs')
+        & dotnet restore (Join-Path $library 'standard-library.csproj') --nologo --packages $cache
+        if ($LASTEXITCODE -ne 0) { Fail 'standard-library: restore failed' }
+        else {
+            $asset = Get-AssetPath $library 'OpenGaussConnector'
+            if ($asset -ne 'lib/netstandard2.0/OpenGaussConnector.dll') { Fail "standard-library: resolved asset is $asset" }
+            & dotnet build (Join-Path $library 'standard-library.csproj') -c $Configuration --no-restore --nologo
+            if ($LASTEXITCODE -ne 0) { Fail 'standard-library: build failed' }
+            else {
+                $modernHost = Join-Path $work 'batch-host'
+                New-Item -ItemType Directory -Force -Path $modernHost | Out-Null
+                @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenGaussConnector" Version="$version" />
+    <ProjectReference Include="../standard-library/standard-library.csproj" />
+  </ItemGroup>
+</Project>
+"@ | Set-Content (Join-Path $modernHost 'batch-host.csproj')
+                @'
+using System;
+using System.Data.Common;
+using OpenGaussConnector;
+using StandardLibrary;
+
+var connectionString = "Host=127.0.0.1;Port=5432;Database=driver_probe;Username=probe;Password=secret";
+
+// The modern host gets the framework DbBatch, while the library was compiled against the provider asset.
+if (typeof(DbBatch).Assembly.GetName().Name != "System.Data.Common")
+    throw new Exception("this host does not expose the framework DbBatch");
+
+var fromLibrary = Probe.Describe(connectionString);
+if (fromLibrary != "Closed:driver_probe")
+    throw new Exception("standard library returned " + fromLibrary);
+
+using var connection = new OpenGaussConnection(connectionString);
+using var batch = connection.CreateBatch();
+if (batch.GetType().BaseType != typeof(DbBatch))
+    throw new Exception("modern asset batch does not derive from the framework DbBatch: " + batch.GetType().BaseType);
+
+Console.WriteLine("standard library binding ok: " + fromLibrary + " · DbBatch=" + typeof(DbBatch).Assembly.GetName().Name);
+'@ | Set-Content (Join-Path $modernHost 'Program.cs')
+                & dotnet restore (Join-Path $modernHost 'batch-host.csproj') --nologo --packages $cache
+                if ($LASTEXITCODE -ne 0) { Fail 'batch-host: restore failed' }
+                else {
+                    $asset = Get-AssetPath $modernHost 'OpenGaussConnector'
+                    if ($asset -ne 'lib/net10.0/OpenGaussConnector.dll') { Fail "batch-host: resolved asset is $asset" }
+                    & dotnet build (Join-Path $modernHost 'batch-host.csproj') -c $Configuration --no-restore --nologo
+                    if ($LASTEXITCODE -ne 0) { Fail 'batch-host: build failed' }
+                    else {
+                        & dotnet (Join-Path $modernHost "bin/$Configuration/net10.0/batch-host.dll")
+                        if ($LASTEXITCODE -ne 0) { Fail 'batch-host: run failed' }
+                        else { Write-Host '  ok: standard library on a net10.0 host' }
+                    }
+                }
+            }
+        }
+
+        # netstandard2.0 has to serve a .NET Framework host; .NET Framework 4.8 is the measured candidate.
+        $frameworkHost = Join-Path $work 'net48'
+        New-Item -ItemType Directory -Force -Path $frameworkHost | Out-Null
+        @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenGaussConnector" Version="$version" />
+  </ItemGroup>
+</Project>
+"@ | Set-Content (Join-Path $frameworkHost 'net48.csproj')
+        @'
+using System;
+using OpenGaussConnector;
+
+namespace Net48Probe
+{
+    internal static class Program
+    {
+        private static void Main()
+        {
+            var builder = new OpenGaussConnectionStringBuilder("Host=h;Port=5432;Database=d;Username=u;Password=p");
+            using (var connection = new OpenGaussConnection(builder.ConnectionString))
+            {
+                if (connection.State.ToString() != "Closed")
+                    throw new Exception("unexpected state " + connection.State);
+            }
+
+            if (OpenGaussFactory.Instance == null)
+                throw new Exception("factory instance is null");
+
+            Console.WriteLine("net48 consumer ok: " + builder.Database);
+        }
+    }
+}
+'@ | Set-Content (Join-Path $frameworkHost 'Program.cs')
+        & dotnet restore (Join-Path $frameworkHost 'net48.csproj') --nologo --packages $cache
+        if ($LASTEXITCODE -ne 0) { Fail 'net48: consumer restore failed' }
+        else {
+            $asset = Get-AssetPath $frameworkHost 'OpenGaussConnector'
+            if ($asset -ne 'lib/netstandard2.0/OpenGaussConnector.dll') { Fail "net48: resolved asset is $asset" }
+            & dotnet build (Join-Path $frameworkHost 'net48.csproj') -c $Configuration --no-restore --nologo
+            if ($LASTEXITCODE -ne 0) { Fail 'net48: consumer build failed' }
+            elseif (Test-Path 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\clr.dll') {
+                & (Join-Path $frameworkHost "bin/$Configuration/net48/net48.exe")
+                if ($LASTEXITCODE -ne 0) { Fail 'net48: consumer run failed' }
+                else { Write-Host '  ok: net48 (netstandard2.0 asset)' }
+            }
+            else { Write-Host '  skip: net48 run (no .NET Framework runtime on this machine)' }
         }
     }
 }

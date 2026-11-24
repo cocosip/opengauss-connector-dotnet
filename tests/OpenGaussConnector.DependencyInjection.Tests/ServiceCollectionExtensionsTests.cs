@@ -97,13 +97,22 @@ namespace OpenGaussConnector.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddOpenGaussDataSource_creates_command_and_batch_from_the_data_source()
+        public void AddOpenGaussDataSource_rejects_commands_on_the_data_source_itself()
         {
+            // A command needs a connection to borrow a physical connector from the pool; the data source
+            // refuses rather than handing out a command that can never execute.
             using var provider = Build(s => s.AddOpenGaussDataSource(ConnectionString));
             var dataSource = provider.GetRequiredService<OpenGaussDataSource>();
 
-            Assert.Equal("SELECT 1", dataSource.CreateCommand("SELECT 1").CommandText);
-            Assert.IsType<OpenGaussBatch>(dataSource.CreateBatch());
+            Assert.Throws<NotSupportedException>(() => dataSource.CreateCommand("SELECT 1"));
+            Assert.Throws<NotSupportedException>(() => dataSource.CreateBatch());
+
+            var connection = Assert.IsType<OpenGaussConnection>(dataSource.CreateConnection());
+            using (connection)
+            using (var command = new OpenGaussCommand("SELECT 1", connection))
+                Assert.Equal("SELECT 1", command.CommandText);
+            using (var batch = connection.CreateBatch())
+                Assert.IsType<OpenGaussBatch>(batch);
         }
 
         [Fact]
