@@ -1,5 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!--
+    Publishing this project is the trimming probe, and it currently fails the trim analysis: the provider is
+    not trim-compatible yet. The error inventory and the reason are recorded in
+    docs/opengauss-connector-progress.md (B07). The project stays in the solution because it builds normally;
+    only `dotnet publish` with a runtime identifier reports the analysis.
+  -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>exe</OutputType>
