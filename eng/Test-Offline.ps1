@@ -48,7 +48,9 @@ $failed = @()
 
 foreach ($suite in $suites) {
     Write-Host "==> $($suite.Name)" -ForegroundColor Cyan
-    $arguments = @('test', (Join-Path $root $suite.Project), '-c', $Configuration, '--nologo')
+    $arguments = @('test', (Join-Path $root $suite.Project), '-c', $Configuration, '--nologo',
+        # CI collects these, and each suite writes its own file because the assemblies differ.
+        '--logger', 'trx', '--results-directory', (Join-Path $root 'TestResults'))
     if ($suite.Filter) {
         $arguments += @('--filter', $suite.Filter)
     }

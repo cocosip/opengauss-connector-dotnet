@@ -1,0 +1,226 @@
+name: CI/CD Pipeline
+
+# Same conventions as the sibling connectors:
+#   push master / pull request -> master : restore, build, offline tests
+#   push a version tag (v0.1.0 or 0.1.0)  : the above plus pack, verify and publish to NuGet
+# Other branches do not trigger anything.
+#
+# The version has a single source, <Version> in Directory.Build.props, and a tag is rejected
+# when it disagrees with it, so the packages and the tag cannot drift apart.
+#
+# Tests that need a server are not part of this pipeline: there is no openGauss service here.
+# They run locally with OPENGAUSS_TEST_DB, as described in docs/opengauss-connector-progress.md.
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
+      - '*.*.*'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          # PropertyGroup is a collection, so a plain [string] cast would join an empty group with
+          # the version and produce a trailing space; keep only the non-empty value.
+          [xml]$properties = Get-Content -LiteralPath Directory.Build.props -Raw
+          $version = (@($properties.Project.PropertyGroup.Version) | Where-Object { $_ }) -join ''
+          if ([string]::IsNullOrWhiteSpace($version)) { throw 'Directory.Build.props does not define <Version>.' }
+          $version = $version.Trim()
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $version"
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      # The package verification runs net8.0, net9.0 and net10.0 consumers and a net48 one.
+      - name: Setup consumer runtimes (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore OpenGaussConnector.slnx
+
+      # Every target framework builds on both legs; the solution holds no platform-specific code.
+      - name: Build all assets
+        run: dotnet build OpenGaussConnector.slnx -c Release --no-restore
+
+      - name: Offline tests
+        shell: pwsh
+        run: ./eng/Test-Offline.ps1 -Configuration Release
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.os }}
+          path: TestResults/**/*.trx
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Windows only: the verification builds a net48 consumer against the netstandard2.0 asset.
+  packages:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup consumer runtimes
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Validate the tag against the version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          [xml]$properties = Get-Content -LiteralPath Directory.Build.props -Raw
+          $version = ((@($properties.Project.PropertyGroup.Version) | Where-Object { $_ }) -join '').Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) { throw 'Directory.Build.props does not define <Version>.' }
+          $tag = $env:RELEASE_TAG -replace '^v', ''
+          if ($tag -ne $version) {
+            throw "Tag '$env:RELEASE_TAG' does not match <Version>$version</Version> in Directory.Build.props."
+          }
+          Write-Host "Tag $env:RELEASE_TAG matches version $version."
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore OpenGaussConnector.slnx
+
+      # Packs the seven packages, inspects every asset, dependency range and symbol file, then
+      # restores, builds and runs throwaway consumers from the produced folder.
+      - name: Pack, inspect and verify package consumers
+        shell: pwsh
+        run: ./eng/Verify-Packages.ps1
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: artifacts/packages/
+          if-no-files-found: error
+          retention-days: 30
+
+  # Publishing only consumes the verified artifacts: it does not restore, build or pack.
+  publish:
+    needs: [build-and-test, packages]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write # NuGet trusted publishing exchanges this OIDC token for a temporary key
+    steps:
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download verified packages
+        uses: actions/download-artifact@v8
+        with:
+          name: nuget-packages
+          path: packages
+
+      # Trusted publishing needs a nuget.org policy for this repository and workflow, and the
+      # profile name in a repository variable. No long-lived API key is stored.
+      - name: NuGet login (OIDC -> temporary API key)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      # Pushing the .nupkg also publishes the matching .snupkg symbol package.
+      - name: Publish packages to NuGet
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          shopt -s nullglob
+          packages=(packages/*.nupkg)
+          # The packages job already asserts the seven expected ids; this only guards against an
+          # empty artifact, which would otherwise let the release succeed with nothing published.
+          if [ ${#packages[@]} -eq 0 ]; then
+            echo "No packages were downloaded." >&2
+            exit 1
+          fi
+          for package in "${packages[@]}"; do
+            dotnet nuget push "$package" \
+              --api-key "$NUGET_API_KEY" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done
+
+      - name: Create the GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.build-and-test.outputs.version }}
+        run: |
+          flags=()
+          if [[ "$VERSION" == *-* ]]; then
+            flags+=(--prerelease --latest=false)
+          fi
+          gh release create "$GITHUB_REF_NAME" --verify-tag \
+            --title "OpenGaussConnector $VERSION" \
+            --generate-notes \
+            "${flags[@]}" packages/*.nupkg packages/*.snupkg

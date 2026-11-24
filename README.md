@@ -100,6 +100,24 @@ $env:OPENGAUSS_TEST_DB = 'Host=127.0.0.1;Port=15432;Username=gaussdb;Password=..
 dotnet test tests/OpenGaussConnector.Tests -c Release
 ```
 
+## Continuous integration
+
+[`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) runs on Windows and Linux:
+
+| Trigger | What runs |
+| --- | --- |
+| Pull request to `master` | Restore, build, and the offline tests on both operating systems |
+| Push to `master` | The same, plus pack, inspect and consume the seven packages from `eng/Verify-Packages.ps1` |
+| Push a tag `v0.1.0` or `0.1.0` | The same, plus publish the packages to NuGet and create the GitHub release |
+
+`<Version>` in `Directory.Build.props` is the only version source, and a tag that disagrees with it fails the
+run before anything is packed. Publishing uses NuGet trusted publishing: the workflow exchanges a GitHub OIDC
+token for a short-lived key, so no long-lived API key is stored, and the repository variable `NUGET_USER`
+holds the nuget.org profile name.
+
+Tests that need a live server are not part of the pipeline because the runners have no openGauss instance;
+run them locally with `OPENGAUSS_TEST_DB` as shown above.
+
 ## Documentation
 
 Start at [docs/README.md](docs/README.md). The [driver design](docs/opengauss-connector-design.md) explains

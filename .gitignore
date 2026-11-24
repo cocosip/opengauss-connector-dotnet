@@ -30,3 +30,4 @@ TestResult.xml
 !.env.example
 !.env.*.example
 *.secrets.json
+/TestResults/
