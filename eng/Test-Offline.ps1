@@ -10,7 +10,7 @@ reachable instance. This script covers the rest, so a checkout can be verified w
 - Dependency injection registration, lifetime, disposal and logging (23 tests)
 - Extension registration and OpenTelemetry source subscription (8 tests)
 - Upstream fixtures that are pure in-memory: connection string builder, buffers, SQL parser, name
-  translator, pgpass files and entries, plus the server version probe and settings (194 tests)
+  translator, pgpass files and entries, plus the server version probe and settings (196 tests)
 
 .PARAMETER Configuration
 Build configuration; Release by default.

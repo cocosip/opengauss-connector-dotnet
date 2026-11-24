@@ -101,42 +101,11 @@ namespace OpenGaussConnector
             IsRedshift = conn.Settings.ServerCompatibilityMode == ServerCompatibilityMode.Redshift;
             _types = await LoadBackendTypes(conn, timeout, async);
 
-            // The type query starts with SELECT version(); identify the product and its compatibility mode so the
-            // Server Version setting can be checked against what the server actually reports.
+            // The type query starts with SELECT version(); keep the raw result and identify the product so the
+            // Server Version setting can be checked against what the server actually reports. The compatibility
+            // mode is probed later, once this instance is bound to the connector's type mapper.
             LongServerVersion = LongVersion;
             ProductVersion = OpenGaussServerVersion.TryParseProductVersion(LongVersion);
-            if (ProductVersion is not null)
-                CompatibilityMode = await ProbeCompatibilityMode(conn, timeout, async);
-        }
-
-        /// <summary>
-        /// Reads the database compatibility mode. Servers without the parameter, or without permission for it, are
-        /// reported as unknown rather than failing the connection.
-        /// </summary>
-        static async ValueTask<string?> ProbeCompatibilityMode(PhysicalConnector conn, OpenGaussTimeout timeout, bool async)
-        {
-            try
-            {
-                using var command = conn.CreateCommand("SHOW sql_compatibility");
-                if (timeout.IsSet)
-                    command.CommandTimeout = (int)timeout.CheckAndGetTimeLeft().TotalSeconds;
-
-                var result = async
-                    ? await command.ExecuteScalarAsync()
-                    : command.ExecuteScalar();
-
-                return result as string;
-            }
-            catch (PostgresException e)
-            {
-                Log.Trace($"SHOW sql_compatibility was refused ({e.SqlState}); the compatibility mode stays unknown.", conn.Id);
-                return null;
-            }
-            catch (OpenGaussException e)
-            {
-                Log.Trace($"SHOW sql_compatibility failed ({e.Message}); the compatibility mode stays unknown.", conn.Id);
-                return null;
-            }
         }
 
         /// <summary>

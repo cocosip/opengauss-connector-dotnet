@@ -66,6 +66,8 @@ namespace OpenGaussConnector.Tests
         [TestCase(6, 0, 6, 7, 0, 0, false)]
         [TestCase(6, 0, -1, 6, 0, 6, true)]
         [TestCase(6, 0, -1, 6, 1, 0, false)]
+        // An explicitly configured patch is compared; only a missing patch leaves it open.
+        [TestCase(6, 0, 0, 6, 0, 6, false)]
         public void Compares_only_the_components_that_were_configured(
             int major, int minor, int build, int productMajor, int productMinor, int productBuild, bool compatible)
         {
@@ -73,6 +75,17 @@ namespace OpenGaussConnector.Tests
             var product = new Version(productMajor, productMinor, productBuild);
 
             Assert.That(OpenGaussServerVersion.IsCompatible(configured, product), Is.EqualTo(compatible));
+        }
+
+        [Test]
+        public void A_two_component_setting_stays_two_components_so_it_keeps_matching_any_patch()
+        {
+            var builder = new OpenGaussConnectionStringBuilder { Host = "h", ServerVersion = "6.0" };
+
+            Assert.That(builder.ConnectionString, Does.Contain("Server Version=6.0"));
+            var reparsed = new OpenGaussConnectionStringBuilder(builder.ConnectionString);
+            Assert.That(reparsed.ServerVersionParsed, Is.EqualTo(new Version(6, 0)));
+            Assert.That(OpenGaussServerVersion.IsCompatible(reparsed.ServerVersionParsed!, new Version(6, 0, 6)), Is.True);
         }
 
         [Test]

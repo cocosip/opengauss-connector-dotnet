@@ -1,6 +1,7 @@
 using System;
-using System.Globalization;
+using System.Threading.Tasks;
 using OpenGaussConnector.Logging;
+using OpenGaussConnector.Util;
 
 namespace OpenGaussConnector.Internal
 {
@@ -118,10 +119,44 @@ namespace OpenGaussConnector.Internal
             if (configured.Major != productVersion.Major || configured.Minor != productVersion.Minor)
                 return false;
 
-            return configured.Build <= 0 || configured.Build == Math.Max(productVersion.Build, 0);
+            return configured.Build < 0 || configured.Build == Math.Max(productVersion.Build, 0);
         }
 
-        internal static string Format(Version version) =>
-            string.Format(CultureInfo.InvariantCulture, "{0}.{1}.{2}", version.Major, version.Minor, Math.Max(version.Build, 0));
+        /// <summary>
+        /// Reads the database compatibility mode the first time a database is described. It must run after the
+        /// database info is bound to the connector's type mapper, because executing a command resolves handlers
+        /// through it. Servers without the parameter, or connections without permission for it, stay unknown
+        /// instead of failing.
+        /// </summary>
+        internal static async ValueTask EnsureCompatibilityModeKnown(
+            PhysicalConnector connector, OpenGaussDatabaseInfo database, OpenGaussTimeout timeout, bool async)
+        {
+            if (database.ProductVersion is null || database.CompatibilityMode is not null)
+                return;
+
+            try
+            {
+                using var command = connector.CreateCommand("SHOW sql_compatibility");
+                if (timeout.IsSet)
+                    command.CommandTimeout = (int)timeout.CheckAndGetTimeLeft().TotalSeconds;
+
+                database.CompatibilityMode = (async
+                    ? await command.ExecuteScalarAsync()
+                    : command.ExecuteScalar()) as string;
+            }
+            catch (PostgresException e)
+            {
+                Log.Trace($"SHOW sql_compatibility was refused ({e.SqlState}); the compatibility mode stays unknown.", connector.Id);
+            }
+            catch (OpenGaussException e)
+            {
+                Log.Trace($"SHOW sql_compatibility failed ({e.Message}); the compatibility mode stays unknown.", connector.Id);
+            }
+
+            if (database.CompatibilityMode is { } mode)
+                Log.Trace($"Identified openGauss {database.ProductVersion} in compatibility mode {mode}.", connector.Id);
+        }
+
+        static readonly OpenGaussLogger Log = OpenGaussLogManager.CreateLogger(nameof(OpenGaussServerVersion));
     }
 }

@@ -1428,7 +1428,9 @@ namespace OpenGaussConnector
             set
             {
                 _serverVersionParsed = OpenGaussServerVersion.ParseConfigured(value, nameof(ServerVersion));
-                _serverVersion = _serverVersionParsed is { } parsed ? OpenGaussServerVersion.Format(parsed) : null;
+                // Keep what the caller wrote: a two-component version leaves the patch unspecified, and
+                // re-formatting it would turn that into an explicit ".0" on the next parse.
+                _serverVersion = _serverVersionParsed is null ? null : value!.Trim();
                 SetValue(nameof(ServerVersion), _serverVersion);
             }
         }

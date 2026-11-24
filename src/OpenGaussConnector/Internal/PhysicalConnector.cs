@@ -611,6 +611,7 @@ namespace OpenGaussConnector.Internal
             // The check runs per physical connection, so a cached DatabaseInfo cannot skip a contradiction
             // between the Server Version setting and the server this connector actually reached.
             OpenGaussServerVersion.EnsureCompatible(Settings, database, Log, Id);
+            await OpenGaussServerVersion.EnsureCompatibilityModeKnown(this, database, timeout, async);
         }
 
         internal async ValueTask<ClusterState> QueryClusterState(
