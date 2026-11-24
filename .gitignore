@@ -20,6 +20,10 @@ TestResult.xml
 *.userosscache
 *.sln.docstates
 
+# Superpowers local files
+/.superpowers/
+/docs/superpowers/
+
 # Local test configuration
 .env
 .env.*
