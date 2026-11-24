@@ -315,7 +315,7 @@ namespace OpenGaussConnector.NodaTime.Tests
             Util.Statics.LegacyTimestampBehavior = true;
 #else
             Assert.Ignore(
-                "Legacy NodaTime tests rely on the OpenGauss.EnableLegacyTimestampBehavior AppContext switch and can only be run in DEBUG builds");
+                "Legacy NodaTime tests rely on the OpenGaussConnector.EnableLegacyTimestampBehavior AppContext switch and can only be run in DEBUG builds");
 #endif
 
         }

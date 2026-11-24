@@ -7,7 +7,7 @@ using GeoJSON.Net.Converters;
 using GeoJSON.Net.CoordinateReferenceSystem;
 using GeoJSON.Net.Geometry;
 using Newtonsoft.Json;
-using OpenGauss.GeoJSON.Internal;
+using OpenGaussConnector.GeoJSON.Internal;
 using OpenGaussConnector.Tests;
 using NUnit.Framework;
 

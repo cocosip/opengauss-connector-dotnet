@@ -115,6 +115,21 @@ $expected = @(
     'src/OpenGaussConnector/Internal/TypeHandling/OpenGaussSimpleTypeHandler.cs'
     'src/OpenGaussConnector.GeoJSON/Internal/GeoJSONHandler.cs'
     'src/OpenGaussConnector.NetTopologySuite/Internal/NetTopologySuiteHandler.cs'
+    # D16: the test connection string comes from OPENGAUSS_TEST_DB, with NPGSQL_TEST_DB as a fallback.
+    'tests/OpenGaussConnector.Tests/TestUtil.cs'
+    # D17: messages and test reasons name the AppContext switches the provider actually reads.
+    'src/OpenGaussConnector/Internal/TypeHandlers/DateTimeHandlers/DateTimeUtils.cs'
+    'src/OpenGaussConnector/Internal/TypeHandlers/DateTimeHandlers/TimestampHandler.cs'
+    'src/OpenGaussConnector/Internal/TypeHandlers/DateTimeHandlers/TimestampTzHandler.cs'
+    'src/OpenGaussConnector.NodaTime/Internal/DateHandler.cs'
+    'src/OpenGaussConnector.NodaTime/Internal/TimestampHandler.cs'
+    'src/OpenGaussConnector.NodaTime/Internal/TimestampTzHandler.cs'
+    'tests/OpenGaussConnector.NodaTime.Tests/LegacyNodaTimeTests.cs'
+    'tests/OpenGaussConnector.NodaTime.Tests/NodaTimeInfinityTests.cs'
+    'tests/OpenGaussConnector.Tests/Types/DateTimeInfinityTests.cs'
+    'tests/OpenGaussConnector.Tests/Types/LegacyDateTimeTests.cs'
+    # D02 follow-up: the plugin test dropped a `using` for the pre-import dotted namespace.
+    'tests/OpenGaussConnector.PluginTests/GeoJSONTests.cs'
 )
 
 # Upstream files with no counterpart: renamed connector files and the dropped NodaTime assembly info.

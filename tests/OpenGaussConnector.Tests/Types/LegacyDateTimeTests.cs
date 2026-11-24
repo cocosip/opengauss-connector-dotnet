@@ -240,7 +240,7 @@ namespace OpenGaussConnector.Tests.Types
             BuiltInTypeHandlerResolver.ResetMappings();
 #else
             Assert.Ignore(
-                "Legacy DateTime tests rely on the OpenGauss.EnableLegacyTimestampBehavior AppContext switch and can only be run in DEBUG builds");
+                "Legacy DateTime tests rely on the OpenGaussConnector.EnableLegacyTimestampBehavior AppContext switch and can only be run in DEBUG builds");
 #endif
         }
 

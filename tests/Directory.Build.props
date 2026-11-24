@@ -6,7 +6,9 @@
     <IsPackable>false</IsPackable>
 
     <!-- Suppress warnings for [RequiresPreviewFeatures] (<EnablePreviewFeatures> doesn't seem to work across <ProjectReference>) -->
-    <NoWarn>$(NoWarn);CA2252</NoWarn>
+    <!-- CA2022: tests deliberately perform partial stream reads. SYSLIB0050/0051: tests exercise the
+         formatter-based serialization members that the provider still ships for netstandard consumers. -->
+    <NoWarn>$(NoWarn);CA2252;CA2022;SYSLIB0050;SYSLIB0051</NoWarn>
   </PropertyGroup>
 
 </Project>

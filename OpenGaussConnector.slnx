@@ -10,7 +10,13 @@
     <Project Path="src/OpenGaussConnector/OpenGaussConnector.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/OpenGaussConnector.Benchmarks/OpenGaussConnector.Benchmarks.csproj" />
     <Project Path="tests/OpenGaussConnector.DependencyInjection.Tests/OpenGaussConnector.DependencyInjection.Tests.csproj" />
     <Project Path="tests/OpenGaussConnector.Extensions.Tests/OpenGaussConnector.Extensions.Tests.csproj" />
+    <Project Path="tests/OpenGaussConnector.NodaTime.Tests/OpenGaussConnector.NodaTime.Tests.csproj" />
+    <Project Path="tests/OpenGaussConnector.PluginTests/OpenGaussConnector.PluginTests.csproj" />
+    <Project Path="tests/OpenGaussConnector.Specification.Tests/OpenGaussConnector.Specification.Tests.csproj" />
+    <Project Path="tests/OpenGaussConnector.Tests/OpenGaussConnector.Tests.csproj" />
+    <Project Path="tests/OpenGaussConnector.TrimmingTests/OpenGaussConnector.TrimmingTests.csproj" />
   </Folder>
 </Solution>

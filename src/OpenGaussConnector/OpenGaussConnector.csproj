@@ -20,10 +20,10 @@
   <ItemGroup>
     <InternalsVisibleTo Include="OpenGaussConnector.Tests" Key="$(OpenGaussConnectorPublicKey)" />
     <InternalsVisibleTo Include="OpenGaussConnector.Extensions.Tests" Key="$(OpenGaussConnectorPublicKey)" />
+    <InternalsVisibleTo Include="OpenGaussConnector.Benchmarks" Key="$(OpenGaussConnectorPublicKey)" />
     <InternalsVisibleTo Include="OpenGaussConnector.NodaTime.Tests" Key="$(OpenGaussConnectorPublicKey)" />
     <InternalsVisibleTo Include="OpenGaussConnector.Specification.Tests" Key="$(OpenGaussConnectorPublicKey)" />
     <InternalsVisibleTo Include="OpenGaussConnector.DependencyInjection.Tests" Key="$(OpenGaussConnectorPublicKey)" />
-    <InternalsVisibleTo Include="OpenGaussConnector.Extensions.Tests" Key="$(OpenGaussConnectorPublicKey)" />
   </ItemGroup>
 
   <!-- Unsafe is part of the shared framework from .NET Core 3.0 onwards. -->

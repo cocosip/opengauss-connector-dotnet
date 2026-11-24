@@ -270,7 +270,7 @@ namespace OpenGaussConnector.NodaTime.Tests
             if (disableDateTimeInfinityConversions)
             {
                 Assert.Ignore(
-                    "NodaTimeInfinityTests rely on the OpenGauss.DisableDateTimeInfinityConversions AppContext switch and can only be run in DEBUG builds");
+                    "NodaTimeInfinityTests rely on the OpenGaussConnector.DisableDateTimeInfinityConversions AppContext switch and can only be run in DEBUG builds");
             }
 #endif
         }

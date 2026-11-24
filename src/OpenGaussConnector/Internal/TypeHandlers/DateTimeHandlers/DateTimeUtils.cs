@@ -9,7 +9,7 @@ namespace OpenGaussConnector.Internal.TypeHandlers.DateTimeHandlers
     static class DateTimeUtils
     {
         const long PostgresTimestampOffsetTicks = 630822816000000000L;
-        const string InfinityExceptionMessage = "Can't read infinity value since OpenGauss.DisableDateTimeInfinityConversions is enabled";
+        const string InfinityExceptionMessage = "Can't read infinity value since OpenGaussConnector.DisableDateTimeInfinityConversions is enabled";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static DateTime DecodeTimestamp(long value, DateTimeKind kind)

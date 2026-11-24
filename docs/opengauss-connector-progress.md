@@ -13,7 +13,7 @@
 | 核心源码与源生成器 | 已完成（五目标编译通过） | `OpenGaussConnector` 五组资产构建成功、0 警告 0 错误；连接串生成器与 43 个类型处理器分部类生成正常。 |
 | 核心 DataSource/Builder 与 DI 包 | 已完成（五目标编译通过） | `OpenGaussDataSource`/`OpenGaussDataSourceBuilder` 按 .NET 8/9/10 提供并持有独立连接源；DI 包五组资产编译通过，15 项注册、生命周期与释放测试通过。 |
 | 五个上游扩展 | 已完成（五目标编译通过） | 五个包各产出五组资产、0 警告 0 错误；`tests/OpenGaussConnector.Extensions.Tests` 8 项通过（插件注册与 OpenTelemetry 订阅）。上游插件的对象级写入成员缺失已按 Npgsql 语义补入 `OpenGaussSimpleTypeHandler`。 |
-| 测试项目接入与离线测试 | 待开始 | 六个测试项目已导入 `tests/`，项目引用和测试框架版本待修，未接入 SLNX。 |
+| 测试项目接入与离线测试 | 已完成 | 六个测试项目改到 `net10.0` + CPM 并接入 SLNX，全部编译通过。`eng/Test-Offline.ps1` 用固定夹具白名单跑通 190 项无需服务端的用例；需要服务端的用例由 `OPENGAUSS_TEST_DB` 驱动。 |
 | 五组资产、包消费、服务端联机 | 待开始 | 未运行打包、包消费或数据库联机测试。 |
 | 实际部署版本和升级状态 | 待确认 | 已核对 6.0.6、7.0.0 LTS 的公开资料。用户环境的版本、发行形态与升级情况待采集。 |
 | 开发机 SDK 与运行时 | 已盘点 | 检测到 10.0.403 SDK 及 .NET 8/9/10 运行时；仓库不设 `global.json`，直接使用已安装 SDK。CI 使用的精确版本待记录。 |
@@ -23,7 +23,7 @@
 | 阶段 | 状态 | 工作与退出条件 |
 | --- | --- | --- |
 | M0 · 建立设计基线 | 本轮完成 | 记录上游快照、版本化资料、范围与能力验收规则。 |
-| M1 · 核心、DI 与五个上游扩展移植 | 进行中 | 核心、生成器、DataSource、DI 与五个扩展包已完成。剩余 B09 测试接入（含上游 NUnit 测试迁移）、B07/B09 打包与独立消费验证。 [M1 开工清单](opengauss-connector-m1.md) |
+| M1 · 核心、DI 与五个上游扩展移植 | 进行中 | 核心、生成器、DataSource、DI、五个扩展包与测试项目接入已完成。剩余 B07/B09 打包与独立消费验证。 [M1 开工清单](opengauss-connector-m1.md) |
 | M2 · 6.0.6 LTS 核心联机 | 待开始 | 验证 C01、C02、C05、C07、C08、C13 和 E01–E03、E10、T01–T03、T06、T07 的 P0 项。按 A、B、PG 记录结果。在一个已验证模式补齐五组资产联机冒烟，并通过 DI 路径创建连接。 |
 | M3 · 7.0.0 LTS 与跨版本回归 | 待开始 | 重复 M2 核心用例与五组资产冒烟，完成 X01–X05 支持环境的逐包功能验收。核对目录、兼容模式、扩展与类型差异。测试版本冲突、版本未知、混合节点及升级后的物理连接重建。 |
 | M4 · 优先功能与预发行 | 待开始 | 按测试结果推进混合认证、SM3、主备、批量、COPY、过程、扩展元数据等 P1 项。校验七个包的消费报告及对应的环境能力，记录已知限制与跳过原因。 |
@@ -42,7 +42,7 @@
 | E | `OpenGaussConnector.NetTopologySuite` | 已完成 | 五组资产 0 警告 0 错误；`UseNetTopologySuite` 注册 `NetTopologySuiteTypeHandlerResolverFactory`；补入对象级写入成员。 |
 | F | `OpenGaussConnector.GeoJSON` | 已完成 | 五组资产 0 警告 0 错误；`UseGeoJson` 注册 `GeoJSONTypeHandlerResolverFactory`；补入对象级写入成员。`GeoJSON.Net` 升到 1.4.1 以摆脱有漏洞的传递依赖。 |
 | G | `OpenGaussConnector.OpenTelemetry` | 已完成 | 五组资产 0 警告 0 错误；`AddOpenGauss` 订阅 `OpenGauss` source，用捕获处理器验证只有该 source 的 activity 被采集。依赖改为 `OpenTelemetry 1.20.1`。 |
-| H | 上游测试项目接入与离线测试入口 | 待开始 | — |
+| H | 上游测试项目接入与离线测试入口 | 已完成 | 六个测试项目编译通过（`net10.0`、CPM、项目引用修正）；新增 `eng/Test-Offline.ps1`：DI 15 项、扩展 8 项、上游离线夹具 167 项，共 190 项通过。测试连接串改用 `OPENGAUSS_TEST_DB`，`NPGSQL_TEST_DB` 保留回退。 |
 | I | 打包、`eng/Verify-Packages.ps1` 与独立消费验证 | 待开始 | — |
 
 ### 联机执行顺序

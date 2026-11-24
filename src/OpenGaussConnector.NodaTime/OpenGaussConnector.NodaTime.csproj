@@ -17,6 +17,10 @@
     <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenGaussConnector.NodaTime.Tests" Key="$(OpenGaussConnectorPublicKey)" />
+  </ItemGroup>
+
   <PropertyGroup>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

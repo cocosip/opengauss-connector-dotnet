@@ -203,7 +203,7 @@ namespace OpenGaussConnector.Tests.Types
             if (disableDateTimeInfinityConversions)
             {
                 Assert.Ignore(
-                    "DateTimeInfinityTests rely on the OpenGauss.DisableDateTimeInfinityConversions AppContext switch and can only be run in DEBUG builds");
+                    "DateTimeInfinityTests rely on the OpenGaussConnector.DisableDateTimeInfinityConversions AppContext switch and can only be run in DEBUG builds");
             }
 #endif
         }

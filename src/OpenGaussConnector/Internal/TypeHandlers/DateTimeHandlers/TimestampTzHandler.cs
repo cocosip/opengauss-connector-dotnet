@@ -35,7 +35,7 @@ namespace OpenGaussConnector.Internal.TypeHandlers.DateTimeHandlers
 
         #region Read
 
-        const string InfinityExceptionMessage = "Can't read infinity value since OpenGauss.DisableDateTimeInfinityConversions is enabled";
+        const string InfinityExceptionMessage = "Can't read infinity value since OpenGaussConnector.DisableDateTimeInfinityConversions is enabled";
 
         /// <inheritdoc />
         public override DateTime Read(OpenGaussReadBuffer buf, int len, FieldDescription? fieldDescription = null)
@@ -101,7 +101,7 @@ namespace OpenGaussConnector.Internal.TypeHandlers.DateTimeHandlers
                 : throw new InvalidCastException(
                     $"Cannot write DateTime with Kind={value.Kind} to PostgreSQL type 'timestamp with time zone', only UTC is supported. " +
                     "Note that it's not possible to mix DateTimes with different Kinds in an array/range. " +
-                    "See the OpenGauss.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
+                    "See the OpenGaussConnector.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
 
         /// <inheritdoc />
         public override int ValidateAndGetLength(OpenGaussDateTime value, OpenGaussParameter? parameter)
@@ -113,7 +113,7 @@ namespace OpenGaussConnector.Internal.TypeHandlers.DateTimeHandlers
                 : throw new InvalidCastException(
                     $"Cannot write DateTime with Kind={value.Kind} to PostgreSQL type 'timestamp with time zone', only UTC is supported. " +
                     "Note that it's not possible to mix DateTimes with different Kinds in an array/range. " +
-                    "See the OpenGauss.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
+                    "See the OpenGaussConnector.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
 
         /// <inheritdoc />
         public int ValidateAndGetLength(DateTimeOffset value, OpenGaussParameter? parameter)
@@ -123,7 +123,7 @@ namespace OpenGaussConnector.Internal.TypeHandlers.DateTimeHandlers
                     $"Cannot write DateTimeOffset with Offset={value.Offset} to PostgreSQL type 'timestamp with time zone', " +
                     "only offset 0 (UTC) is supported. " +
                     "Note that it's not possible to mix DateTimes with different Kinds in an array/range. " +
-                    "See the OpenGauss.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
+                    "See the OpenGaussConnector.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
 
         /// <inheritdoc />
         public int ValidateAndGetLength(long value, OpenGaussParameter? parameter) => 8;

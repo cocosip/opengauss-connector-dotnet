@@ -25,7 +25,9 @@ namespace OpenGaussConnector.Tests
         /// May be overridden in fixtures, e.g. to set special connection parameters
         /// </summary>
         public static string ConnectionString { get; }
-            = Environment.GetEnvironmentVariable("NPGSQL_TEST_DB") ?? DefaultConnectionString;
+            = Environment.GetEnvironmentVariable("OPENGAUSS_TEST_DB")
+              ?? Environment.GetEnvironmentVariable("NPGSQL_TEST_DB")
+              ?? DefaultConnectionString;
 
         public static bool IsOnBuildServer =>
             Environment.GetEnvironmentVariable("GITHUB_ACTIONS") != null ||

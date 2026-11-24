@@ -1,6 +1,7 @@
 using System;
+using OpenGaussConnector;
 
-var connectionString = Environment.GetEnvironmentVariable("NPGSQL_TEST_DB")
+var connectionString = Environment.GetEnvironmentVariable("OPENGAUSS_TEST_DB")
                        ?? "Server=localhost;Username=opengauss_tests;Password=opengauss_tests;Database=opengauss_tests;Timeout=0;Command Timeout=0";
 
 await using var conn = new OpenGaussConnection(connectionString);

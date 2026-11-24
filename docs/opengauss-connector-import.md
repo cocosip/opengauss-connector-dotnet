@@ -69,9 +69,11 @@
 | D10 | `TypeHandlerSourceGenerator.cs` 对 `UsingDirectiveSyntax.Name` 增加空判断 | 新版 Roslyn 的可空注解使原写法触发 CS8602（本项目开 `TreatWarningsAsErrors`） |
 | D11 | 未设置 `global.json` | 按项目负责人要求不固定 SDK 版本，直接使用已安装 SDK（本次验证为 10.0.403）。设计文档中的相关条目随此项调整 |
 | D12 | BCL 补充包版本：`System.Text.Json`、`System.Threading.Channels`、`System.Collections.Immutable`、`System.Diagnostics.DiagnosticSource` 取 10.0.0，`System.Runtime.CompilerServices.Unsafe` 取 6.1.2，`Microsoft.Bcl.HashCode` 取 1.1.1 | 上游 6.0.0 组合触发 NU1903（System.Text.Json 已知漏洞告警）。取值对应本次验证的 .NET 10 宿主，netstandard 两组资产仍可恢复 |
-| D13 | 四个扩展项目保留上游的 `Microsoft.CodeAnalysis.PublicApiAnalyzers`（版本移入 CPM）与 `PublicAPI.*.txt` 声明文件；核心不引入该分析器 | 扩展包继续按声明文件跟踪公共 API（B06）；核心没有上游声明文件，整份 ADO.NET 公共面应由发布阶段的 Package Validation 校验，避免一次性生成数千行声明 |
+| D13 | 四个扩展项目去掉上游的 `Microsoft.CodeAnalysis.PublicApiAnalyzers` 引用与 `PublicAPI.*.txt` 声明文件 | 声明文件按"可空注解已启用"生成，而 `netstandard2.0` 资产关闭可空（BCL 未注解），同一份声明无法跨五组 TFM 校验（RS0016/RS0017）。公共 API 兼容性改由发布阶段的包校验与测试覆盖 |
 | D14 | 修正重命名误伤的限定名：`using X = PhysicalConnector.StatementType`、`PhysicalConnector.Internal.*`、`PhysicalConnector.Json.NET`、`NET.Schema.*` 等恢复为 `OpenGaussConnector.*`；`using OpenGauss;` 之外所有 `NET.<Type/命名空间>` 的父命名空间写法改为完整命名空间 | 全局替换按 token 处理，会命中"命名空间限定写法"里的根命名空间；这类位置出现在命名空间别名、基类引用、泛型参数和注释中。由 `eng/Verify-UpstreamFidelity.ps1` 逐文件比对发现并修复 |
 | D15 | 作者、公司、版权、许可证集中到根 `Directory.Build.props`，删除各项目文件里的 `<Authors>`（上游为 `Microestc`） | 通用包元数据只应有一处定义；各项目仅保留包描述与标签等包特有信息 |
+| D16 | 测试连接串环境变量改名为 `OPENGAUSS_TEST_DB`，同时保留 `NPGSQL_TEST_DB` 作为回退 | 驱动不再使用 `Npgsql` 名称；回退使上游 CI 脚本与文档仍然可用 |
+| D17 | 过时行为提示与测试断言中的 `AppContext` 开关名改为 `OpenGaussConnector.EnableLegacyTimestampBehavior`、`OpenGaussConnector.DisableDateTimeInfinityConversions` | 代码实际读取的是 `OpenGaussConnector.*`，原提示指向一个无人读取的键，按提示配置不生效 |
 
 ## 导入验证
 
@@ -81,6 +83,7 @@
 | 2026-11-24 | 生成器产物（`-p:EmitGeneratedFiles=true`） | 生成 `OpenGaussConnectionStringBuilder.Generated.cs` 与 43 个类型处理器分部类，命名空间均为 `OpenGaussConnector` |
 | 2026-11-24 | 离线冒烟（`artifacts/tmp/smoke`，不入库） | 连接串默认值/往返/大小写关键字、`OpenGaussFactory.Instance`、`DbProviderFactories.GetFactory("OpenGaussConnector")`、未打开连接状态、参数集合、`DbBatch`、命名空间断言全部通过 |
 | 2026-11-24 | `eng/Verify-UpstreamFidelity.ps1` | 逐文件比对 424 个上游 `.cs` 文件，除下表 10 处记录偏离外无非预期差异；该脚本用于后续追加上游文件后的回归检查 |
-| 待接入 | 测试项目迁移、五组资产强制加载与包消费 | 见 [开发进度](opengauss-connector-progress.md) |
+| 2026-11-24 | 六个测试项目迁移（`tests/`，均 `net10.0`，版本走 CPM） | 全部编译通过；`eng/Test-Offline.ps1` 跑通 190 项无需服务端的用例（DI 15、扩展 8、上游离线夹具 167） |
+| 待接入 | 五组资产强制加载与包消费 | 见 [开发进度](opengauss-connector-progress.md) |
 
 `eng/Verify-UpstreamFidelity.ps1` 把两侧都折叠成同一套占位名（项目/命名空间 → `NS.*`，内部连接类型 → `CONNTYPE`）后比较内容，因此任何非重命名改动都会被报出来。本地上游快照缺失时先按[参考资料](references.md#本地源码)的路径检出对应提交。

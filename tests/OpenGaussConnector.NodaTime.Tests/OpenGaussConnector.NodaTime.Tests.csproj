@@ -1,14 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="NodaTime" />
-    <PackageReference Include="NUnit" />
-    <PackageReference Include="NLog" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="NLog" />
+    <PackageReference Include="NodaTime" />
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../../src/OpenGauss/OpenGauss.csproj" />
-    <ProjectReference Include="../../src/OpenGauss.NodaTime/OpenGauss.NodaTime.csproj" />
+    <ProjectReference Include="../../src/OpenGaussConnector/OpenGaussConnector.csproj" />
+    <ProjectReference Include="../../src/OpenGaussConnector.NodaTime/OpenGaussConnector.NodaTime.csproj" />
     <ProjectReference Include="../OpenGaussConnector.Tests/OpenGaussConnector.Tests.csproj" />
   </ItemGroup>
+
 </Project>

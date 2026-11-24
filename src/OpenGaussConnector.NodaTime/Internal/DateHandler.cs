@@ -21,7 +21,7 @@ namespace OpenGaussConnector.NodaTime.Internal
     {
         readonly BclDateHandler _bclHandler;
 
-        const string InfinityExceptionMessage = "Can't read infinity value since OpenGauss.DisableDateTimeInfinityConversions is enabled";
+        const string InfinityExceptionMessage = "Can't read infinity value since OpenGaussConnector.DisableDateTimeInfinityConversions is enabled";
 
         internal DateHandler(PostgresType postgresType)
             : base(postgresType)

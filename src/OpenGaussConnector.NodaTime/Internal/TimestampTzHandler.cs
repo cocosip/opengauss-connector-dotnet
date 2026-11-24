@@ -16,7 +16,7 @@ namespace OpenGaussConnector.NodaTime.Internal
     {
         readonly BclTimestampTzHandler _bclHandler;
 
-        const string InfinityExceptionMessage = "Can't read infinity value since OpenGauss.DisableDateTimeInfinityConversions is enabled";
+        const string InfinityExceptionMessage = "Can't read infinity value since OpenGaussConnector.DisableDateTimeInfinityConversions is enabled";
 
         public TimestampTzHandler(PostgresType postgresType)
             : base(postgresType)
@@ -63,7 +63,7 @@ namespace OpenGaussConnector.NodaTime.Internal
                 : throw new InvalidCastException(
                     $"Cannot write ZonedDateTime with Zone={value.Zone} to PostgreSQL type 'timestamp with time zone', " +
                     "only UTC is supported. " +
-                    "See the OpenGauss.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
+                    "See the OpenGaussConnector.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
 
         public int ValidateAndGetLength(OffsetDateTime value, OpenGaussParameter? parameter)
             => value.Offset == Offset.Zero || LegacyTimestampBehavior
@@ -71,7 +71,7 @@ namespace OpenGaussConnector.NodaTime.Internal
                 : throw new InvalidCastException(
                     $"Cannot write OffsetDateTime with Offset={value.Offset} to PostgreSQL type 'timestamp with time zone', " +
                     "only offset 0 (UTC) is supported. " +
-                    "See the OpenGauss.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
+                    "See the OpenGaussConnector.EnableLegacyTimestampBehavior AppContext switch to enable legacy behavior.");
 
         public override void Write(Instant value, OpenGaussWriteBuffer buf, OpenGaussParameter? parameter)
             => WriteInstant(value, buf);
