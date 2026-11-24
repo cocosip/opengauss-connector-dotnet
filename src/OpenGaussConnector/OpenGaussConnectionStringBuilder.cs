@@ -1413,6 +1413,34 @@ namespace OpenGaussConnector
         }
         ServerCompatibilityMode _serverCompatibilityMode;
 
+        /// <summary>
+        /// The openGauss product version the driver should assume, or <c>Auto</c> (the default) to identify it from
+        /// the connected server. Set it to a verified version such as <c>6.0.6</c> or <c>7.0.0</c>; a version that
+        /// contradicts the server fails the connection.
+        /// </summary>
+        [Category("Connection")]
+        [Description("The openGauss product version the driver should assume, or Auto to identify the server.")]
+        [DisplayName("Server Version")]
+        [OpenGaussConnectionStringProperty]
+        public string? ServerVersion
+        {
+            get => _serverVersion;
+            set
+            {
+                _serverVersionParsed = OpenGaussServerVersion.ParseConfigured(value, nameof(ServerVersion));
+                _serverVersion = _serverVersionParsed is { } parsed ? OpenGaussServerVersion.Format(parsed) : null;
+                SetValue(nameof(ServerVersion), _serverVersion);
+            }
+        }
+
+        string? _serverVersion;
+        Version? _serverVersionParsed;
+
+        /// <summary>
+        /// The <see cref="ServerVersion"/> setting as a version, or null when it is <c>Auto</c>.
+        /// </summary>
+        internal Version? ServerVersionParsed => _serverVersionParsed;
+
         #endregion
 
         #region Properties - Obsolete

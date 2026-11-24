@@ -56,6 +56,23 @@ namespace OpenGaussConnector.Internal
         /// </summary>
         public string ServerVersion { get; }
 
+        /// <summary>
+        /// The raw result of <c>SELECT version()</c>, retained for diagnostics.
+        /// </summary>
+        public string? LongServerVersion { get; internal set; }
+
+        /// <summary>
+        /// The openGauss product version identified from <c>SELECT version()</c>, or null when the server does not
+        /// identify itself as openGauss (the "unknown" state) and the driver falls back to its verified baseline.
+        /// </summary>
+        public Version? ProductVersion { get; internal set; }
+
+        /// <summary>
+        /// The database compatibility mode reported by <c>SHOW sql_compatibility</c>, or null when the server does
+        /// not support the parameter or the probe was refused.
+        /// </summary>
+        public string? CompatibilityMode { get; internal set; }
+
         #endregion General database info
 
         #region Supported capabilities and features

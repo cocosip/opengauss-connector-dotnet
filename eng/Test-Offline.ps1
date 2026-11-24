@@ -7,10 +7,10 @@ The suites that talk to a server (the upstream NUnit suite, the plugin tests, th
 ADO.NET specification tests) only run with OPENGAUSS_TEST_DB (or the legacy NPGSQL_TEST_DB) pointing at a
 reachable instance. This script covers the rest, so a checkout can be verified without one:
 
-- Dependency injection registration, lifetime and disposal (15 tests)
+- Dependency injection registration, lifetime, disposal and logging (23 tests)
 - Extension registration and OpenTelemetry source subscription (8 tests)
 - Upstream fixtures that are pure in-memory: connection string builder, buffers, SQL parser, name
-  translator, pgpass files and entries (167 tests)
+  translator, pgpass files and entries, plus the server version probe and settings (194 tests)
 
 .PARAMETER Configuration
 Build configuration; Release by default.
@@ -34,7 +34,8 @@ $offlineFilter = @(
     'FullyQualifiedName~ReadBufferTests',
     'FullyQualifiedName~WriteBufferTests',
     'FullyQualifiedName~SnakeCaseNameTranslatorTests',
-    'FullyQualifiedName~SqlQueryParserTests'
+    'FullyQualifiedName~SqlQueryParserTests',
+    'FullyQualifiedName~ServerVersionTests'
 ) -join '|'
 
 $suites = @(

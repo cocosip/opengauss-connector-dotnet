@@ -130,6 +130,13 @@ $expected = @(
     'tests/OpenGaussConnector.Tests/Types/LegacyDateTimeTests.cs'
     # D02 follow-up: the plugin test dropped a `using` for the pre-import dotted namespace.
     'tests/OpenGaussConnector.PluginTests/GeoJSONTests.cs'
+    # D18: openGauss server version identification (Server Version setting, SELECT version() product
+    # marker, SHOW sql_compatibility probe), see docs/opengauss-connector-design.md.
+    'src/OpenGaussConnector/OpenGaussConnectionStringBuilder.cs'
+    'src/OpenGaussConnector/Internal/OpenGaussDatabaseInfo.cs'
+    'src/OpenGaussConnector/PostgresDatabaseInfo.cs'
+    # D19: logging providers can be installed after the driver has been used, which the DI bridge needs.
+    'src/OpenGaussConnector/Logging/OpenGaussLogManager.cs'
 )
 
 # Upstream files with no counterpart: renamed connector files and the dropped NodaTime assembly info.

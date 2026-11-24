@@ -17,6 +17,11 @@ services.AddOpenGaussConnection(connectionString); // transient connections, all
 - `AddOpenGaussConnection` registers transient, closed `OpenGaussConnection` instances owned by the
   resolving scope, and adds the `DbConnection` alias when the base type is free.
 
+`AddOpenGaussLogging()` routes the driver's own log entries into the container's `ILoggerFactory`, keeping the
+driver category, level and connection id. The driver's logging entry point is process-wide, so the first installed
+provider covers the process and an application that assigns `OpenGaussLogManager.Provider` itself is never
+overridden.
+
 Every extension takes an optional `Action<IServiceProvider, OpenGaussDataSourceBuilder>` to adjust the
 data source before it is built. Registering the same service twice throws instead of silently replacing
 the earlier registration.

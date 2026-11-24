@@ -607,6 +607,10 @@ namespace OpenGaussConnector.Internal
 
             DatabaseInfo = database;
             TypeMapper.DatabaseInfo = database;
+
+            // The check runs per physical connection, so a cached DatabaseInfo cannot skip a contradiction
+            // between the Server Version setting and the server this connector actually reached.
+            OpenGaussServerVersion.EnsureCompatible(Settings, database, Log, Id);
         }
 
         internal async ValueTask<ClusterState> QueryClusterState(

@@ -14,6 +14,11 @@
   <ItemGroup>
     <ProjectReference Include="../OpenGaussConnector/OpenGaussConnector.csproj" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenGaussConnector.DependencyInjection.Tests" Key="$(OpenGaussConnectorPublicKey)" />
   </ItemGroup>
 
   <ItemGroup>

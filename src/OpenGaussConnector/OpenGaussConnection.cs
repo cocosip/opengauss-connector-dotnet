@@ -1081,6 +1081,39 @@ namespace OpenGaussConnector
             c => c.DatabaseInfo.ServerVersion);
 
         /// <summary>
+        /// The openGauss product version identified from <c>SELECT version()</c>, or null when the server does not
+        /// identify itself as openGauss.
+        /// <remarks>
+        /// This can only be called when the connection is open. The raw result is available through
+        /// <see cref="LongServerVersion"/>.
+        /// </remarks>
+        /// </summary>
+        [Browsable(false)]
+        public Version? OpenGaussVersion => CheckOpenAndRunInTemporaryScope(
+            c => c.DatabaseInfo.ProductVersion);
+
+        /// <summary>
+        /// The raw result of <c>SELECT version()</c>, retained for diagnostics.
+        /// <remarks>
+        /// This can only be called when the connection is open.
+        /// </remarks>
+        /// </summary>
+        [Browsable(false)]
+        public string? LongServerVersion => CheckOpenAndRunInTemporaryScope(
+            c => c.DatabaseInfo.LongServerVersion);
+
+        /// <summary>
+        /// The database compatibility mode reported by <c>SHOW sql_compatibility</c>, or null when the server does
+        /// not support the parameter or the probe was refused.
+        /// <remarks>
+        /// This can only be called when the connection is open.
+        /// </remarks>
+        /// </summary>
+        [Browsable(false)]
+        public string? CompatibilityMode => CheckOpenAndRunInTemporaryScope(
+            c => c.DatabaseInfo.CompatibilityMode);
+
+        /// <summary>
         /// Process id of backend server.
         /// This can only be called when there is an active connection.
         /// </summary>

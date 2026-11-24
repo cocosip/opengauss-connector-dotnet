@@ -12,6 +12,8 @@ This file records the fixed baseline for importing the official ADO.NET snapshot
 | Local checkout | `D:\Code\dotnet-source\openGauss-connector-adonet` (relative to this repository: `../../dotnet-source/openGauss-connector-adonet`) |
 | Commit | `ba5e8ba629b0d660d095da6d8af94f487a00730c` (2023-11-07) |
 | Import scope | all seven projects under `src/` plus `src/Shared`, the six projects under `test/`, `LICENSE`, `openGauss.png`, `.editorconfig`, `.gitattributes` |
+| D18 | openGauss server version identification in `OpenGaussConnectionStringBuilder.cs`, `Internal/OpenGaussDatabaseInfo.cs` and `PostgresDatabaseInfo.cs`, plus the new `Internal/OpenGaussServerVersion.cs` | The upstream snapshot only exposes the raw `server_version`. This port adds the `Server Version` setting, parses the openGauss product marker from `SELECT version()`, probes `SHOW sql_compatibility` only when the marker is present, and fails a physical connection whose configured version contradicts the server |
+| D19 | `Logging/OpenGaussLogManager.cs` gains `TrySetProvider` | Upstream resolves the provider exactly once and forbids replacing it. The DI bridge is installed when a connection or data source is resolved, so a later install has to be possible; an application assignment still takes precedence |
 | Not imported | upstream `OpenGauss.sln` (replaced by `OpenGaussConnector.slnx`), `README.md`/`README.en.md` (to be added when the root documentation is rewritten for this project), `OpenGauss.snk` (replaced by this project's key), upstream root `Directory.Build.props`/`Directory.Packages.props`/`global.json` (rebuilt for this project's solution) |
 
 ## Path Mapping

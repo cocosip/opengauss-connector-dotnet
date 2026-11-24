@@ -1,7 +1,11 @@
 using System;
 using System.Data.Common;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using OpenGaussConnector;
+using OpenGaussConnector.DependencyInjection;
+using OpenGaussConnector.Logging;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -23,7 +27,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new InvalidOperationException("An OpenGauss connection is already registered.");
 
             var addAlias = !Has(services, typeof(DbConnection));
-            services.AddTransient(_ => new OpenGaussConnection(connectionString));
+            services.AddTransient(sp => { InstallLogging(sp); return new OpenGaussConnection(connectionString); });
             if (addAlias)
                 services.AddTransient<DbConnection>(sp => sp.GetRequiredService<OpenGaussConnection>());
 
@@ -82,11 +86,37 @@ namespace Microsoft.Extensions.DependencyInjection
         static OpenGaussDataSource Build(
             IServiceProvider services, string connectionString, Action<IServiceProvider, OpenGaussDataSourceBuilder>? configure)
         {
+            InstallLogging(services);
+
             var builder = new OpenGaussDataSourceBuilder(connectionString);
             configure?.Invoke(services, builder);
             return builder.Build();
         }
 #endif
+
+        /// <summary>
+        /// Routes the driver's own log entries into the container's <see cref="ILoggerFactory"/>. The first
+        /// registration wins for the process: the driver's logging entry point is process-wide, so a provider
+        /// already assigned through <c>OpenGaussLogManager.Provider</c> is left alone.
+        /// </summary>
+        public static IServiceCollection AddOpenGaussLogging(this IServiceCollection services)
+        {
+            if (services is null)
+                throw new ArgumentNullException(nameof(services));
+
+            services.TryAddSingleton<IOpenGaussLoggingProvider>(
+                sp => new MicrosoftExtensionsLoggingProvider(sp.GetService<ILoggerFactory>()));
+            return services;
+        }
+
+        /// <summary>
+        /// Installs the container's logging provider, if one was registered, before the first connection is built.
+        /// </summary>
+        static void InstallLogging(IServiceProvider services)
+        {
+            if (services.GetService<IOpenGaussLoggingProvider>() is { } provider)
+                OpenGaussLogManager.TrySetProvider(provider);
+        }
 
         static bool Has(IServiceCollection services, Type serviceType, object? serviceKey = null)
             => services.Any(d => d.ServiceType == serviceType &&
